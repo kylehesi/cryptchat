@@ -1,0 +1,15 @@
+{
+  "name": "cryptchat",
+  "productName": "CryptChat",
+  "version": "0.1.0",
+  "description": "Peer-to-peer voice, screen sharing and chat. No accounts, no backend.",
+  "main": "src/main/main.js",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^44.7.0"
+  }
+}

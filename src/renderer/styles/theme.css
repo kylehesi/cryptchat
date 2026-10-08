@@ -1,0 +1,19 @@
+:root {
+  --bg: #000000;
+  --fg: #00ff00;
+  --font-mono: Consolas, 'Courier New', monospace;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-mono);
+}
+
+#boot {
+  margin: 16px;
+  font-family: inherit;
+}
