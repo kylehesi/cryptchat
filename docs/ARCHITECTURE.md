@@ -153,7 +153,14 @@ crash, and **no dummy black canvas track**. Stopping is `replaceTrack(null)`.
    channel, so the other side drops immediately instead of waiting for an ICE timeout.
 2. **After connect:** any further negotiation (ICE restart after a network change, codec changes,
    future camera) uses the **"perfect negotiation" pattern over the `control` channel**. The
-   user never copies anything again for that session.
+   user never copies anything again for that session. The answerer is the *polite* peer: on an
+   offer collision it rolls back and accepts the other side's offer. Incoming `sdp`/`ice`
+   messages are processed strictly in order.
+3. **Recovery:** `disconnected` → wait 4 s (most blips heal by themselves) → `restartIce()`.
+   `failed` → restart immediately. If the link is not back within 30 s, the session closes with
+   "Link lost". **Limit:** the restart offer travels through the same tunnel. If the only path
+   is gone for good, nothing can deliver it without a signaling server, so new payloads are
+   needed. Room-code signaling (v2) would remove this limit.
 
 Signaling sits behind a small interface (`send(msg)`, `onMessage`), so a "room code" transport can
 be added later without touching `PeerSession`. See the open decision in ROADMAP.

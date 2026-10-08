@@ -6,6 +6,7 @@
 //   'local-payload'  { payload, type }      a payload is ready to be sent to the peer
 //   'channel-open'   { name }               a DataChannel of the current session opened
 //   'peer-message'   { channel, message }   a protocol message from the peer (except 'bye')
+//   'link-stats'     { route, rttMs }       every 2 s while a link exists (see stats.js)
 //
 // Phases:
 //   idle            nothing running
@@ -14,7 +15,8 @@
 //   awaiting-peer   answerer: answer is ready, waiting for the offerer to apply it
 //   connecting      both descriptions applied, ICE is working
 //   connected       tunnel up
-//   failed          ICE failed; user must terminate and retry
+//   reconnecting    tunnel was up, peer stopped responding; recovering (see #beginRecovery)
+//   failed          ICE never connected; user must terminate and retry
 //
 // v1 keeps a single session. Groups later become a Map<peerId, PeerSession> (ARCHITECTURE §5.1).
 
@@ -24,10 +26,19 @@ import { decodePayload, encodePayload, PayloadError } from './payload.js';
 import { PeerSession } from './peer-session.js';
 import { countCandidates, describeRoute, getSelectedRoute } from './stats.js';
 
+const STATS_INTERVAL_MS = 2000;
+const ICE_RESTART_DELAY_MS = 4000; // give ICE a chance to recover by itself first
+const LINK_LOST_TIMEOUT_MS = 30000;
+
 export class Connection extends EventTarget {
   phase = 'idle';
   /** @type {PeerSession | null} */
   session = null;
+
+  #statsTimer = null;
+  #restartTimer = null;
+  #lostTimer = null;
+  #routeKey = null;
 
   /** Offerer side: create a session and produce the offer payload. */
   async generateOffer() {
@@ -133,12 +144,68 @@ export class Connection extends EventTarget {
       }
       this.#emit('peer-message', detail);
     });
+    session.addEventListener('signal-error', ({ detail }) => {
+      if (session === this.session) log.warn(`Renegotiation failed: ${detail.error.message}`);
+    });
   }
 
   #closeSession() {
+    this.#stopTimers();
     this.session?.close();
     this.session = null;
+    this.#routeKey = null;
     this.#setPhase('idle');
+  }
+
+  #stopTimers() {
+    clearInterval(this.#statsTimer);
+    clearTimeout(this.#restartTimer);
+    clearTimeout(this.#lostTimer);
+    this.#statsTimer = this.#restartTimer = this.#lostTimer = null;
+  }
+
+  // The peer stopped answering. Short outages (Wi-Fi blip, same IP) heal by themselves within
+  // seconds. If not, an ICE restart is negotiated over the control channel: that works while
+  // any path still carries data, e.g. a second interface. If the old path is completely gone
+  // (new network on both ends of the only path), nothing can carry the restart offer without a
+  // signaling server, so after LINK_LOST_TIMEOUT_MS we give up and ask for new payloads.
+  #beginRecovery(reason) {
+    if (this.phase === 'reconnecting') return;
+    this.#setPhase('reconnecting');
+    log.warn(reason);
+
+    this.#restartTimer = setTimeout(() => {
+      if (this.phase !== 'reconnecting') return;
+      log.info('Attempting ICE restart over the control channel...');
+      this.session.restartIce();
+    }, ICE_RESTART_DELAY_MS);
+
+    this.#lostTimer = setTimeout(() => {
+      log.err(`Link lost: peer unreachable for ${LINK_LOST_TIMEOUT_MS / 1000} s. Generate a new payload to reconnect.`);
+      this.#closeSession();
+    }, LINK_LOST_TIMEOUT_MS);
+  }
+
+  #endRecovery() {
+    clearTimeout(this.#restartTimer);
+    clearTimeout(this.#lostTimer);
+    this.#restartTimer = this.#lostTimer = null;
+  }
+
+  async #pollStats() {
+    const session = this.session;
+    if (!session) return;
+    const route = await getSelectedRoute(session.pc).catch(() => null);
+    if (session !== this.session || !route) return;
+
+    const key = `${route.localType}/${route.remoteType}/${route.protocol}`;
+    if (key !== this.#routeKey) {
+      const rtt = route.rttMs != null ? `, RTT ${route.rttMs} ms` : '';
+      if (this.#routeKey) log.info(`Route changed: ${describeRoute(route)}${rtt}`);
+      else log.ok(`Route: ${describeRoute(route)}${rtt}`);
+      this.#routeKey = key;
+    }
+    this.#emit('link-stats', { route, rttMs: route.rttMs });
   }
 
   async #onPeerState(session, state) {
@@ -151,21 +218,28 @@ export class Connection extends EventTarget {
         if (this.phase === 'connecting') log.info('ICE: checking candidate pairs...');
         break;
       case 'connected': {
+        const recovered = this.phase === 'reconnecting';
+        this.#endRecovery();
         this.#setPhase('connected');
-        log.ok('TUNNEL ESTABLISHED. Encrypted with DTLS.');
-        const route = await getSelectedRoute(session.pc);
-        if (route) {
-          const rtt = route.rttMs != null ? `, RTT ${route.rttMs} ms` : '';
-          log.ok(`Route: ${describeRoute(route)}${rtt}`);
-        }
+        log.ok(recovered ? 'Link restored.' : 'TUNNEL ESTABLISHED. Encrypted with DTLS.');
+        this.#statsTimer ??= setInterval(() => this.#pollStats(), STATS_INTERVAL_MS);
+        await this.#pollStats();
         break;
       }
       case 'disconnected':
-        log.warn('Link unstable: peer not responding...');
+        if (this.phase === 'connected') this.#beginRecovery('Link unstable: peer not responding. Waiting for recovery...');
         break;
       case 'failed':
-        this.#setPhase('failed');
-        log.err('ICE failed: no working route between peers. A TURN relay may be required. TERMINATE_LINK and retry.');
+        if (this.phase === 'connected' || this.phase === 'reconnecting') {
+          // 'failed' never heals by itself: restart right away instead of waiting.
+          this.#beginRecovery('Link failed. Recovering...');
+          clearTimeout(this.#restartTimer);
+          log.info('Attempting ICE restart over the control channel...');
+          session.restartIce();
+        } else {
+          this.#setPhase('failed');
+          log.err('ICE failed: no working route between peers. A TURN relay may be required. TERMINATE_LINK and retry.');
+        }
         break;
       default:
         break;
@@ -182,6 +256,11 @@ export class Connection extends EventTarget {
     const payload = await encodePayload(description);
     log.info(`${description.type.toUpperCase()} payload ready (${payload.length} chars).`);
     this.#emit('local-payload', { payload, type: description.type });
+  }
+
+  /** Debug/test hook: force an ICE restart on a live link. */
+  restartIce() {
+    if (this.phase === 'connected' || this.phase === 'reconnecting') this.session.restartIce();
   }
 
   #fail(what, error) {

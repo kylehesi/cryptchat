@@ -47,10 +47,20 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
   Verified by an automated two-window test.
 
 ## Phase 4 — In-band negotiation
-- [ ] Perfect negotiation over the `control` channel
-- [ ] Automatic ICE restart on `disconnected`/`failed` (e.g. Wi-Fi switch)
-- [ ] Heartbeat ping → RTT in the log
+- [x] Perfect negotiation over the `control` channel (answerer = polite peer)
+- [x] Automatic recovery: `disconnected` → wait 4 s → ICE restart; `failed` → restart at once;
+      give up after 30 s with a clear "Link lost" message
+- [x] ~~Heartbeat ping~~ replaced by `getStats` polling every 2 s: `LINK: SRFLX · 23 ms` in the
+      KERNEL_LOG header, route changes logged. ICE consent checks already detect a dead peer, so a
+      separate ping protocol added nothing.
+- [x] Dev-only `window.__cc` hook (F12 console) for debugging
 - **Checkpoint:** toggle Wi-Fi off and on on one side. The call recovers without a new copy-paste.
+  - [x] Automated: single ICE restart, simultaneous restart from both sides (glare), chat
+        still flowing afterwards, peer crash → recovery attempt → "Link lost" after 30 s
+  - [ ] Manual: Wi-Fi toggle between two real PCs (**needs you**)
+  - Known limit: if the only path dies for good (e.g. both IPs change), the restart offer has no
+    way to reach the peer without a signaling server, so new payloads are needed. v2
+    room-code signaling removes this limit.
 
 ## Phase 5 — Voice
 - [ ] Mic device list, hot-swap, MIC_SRC dropdown

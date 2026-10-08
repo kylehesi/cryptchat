@@ -5,7 +5,13 @@
 //   'state'         { state }             RTCPeerConnection.connectionState changes
 //   'channel-open'  { name }              a DataChannel became usable
 //   'channel-close' { name }
-//   'message'       { channel, message }  a decoded protocol message (see protocol.js)
+//   'message'       { channel, message }  a decoded protocol message (see protocol.js);
+//                                         in-band 'sdp' / 'ice' signaling is handled here, not emitted
+//   'signal-error'  { error }             in-band renegotiation failed
+//
+// In-band signaling ("perfect negotiation", ARCHITECTURE §5.3): once the control channel is
+// open, every later renegotiation (ICE restart, future media) is exchanged over it. The
+// answerer is the "polite" peer: on an offer collision it rolls back and accepts the other offer.
 
 import { decodeMessage, encodeMessage } from './protocol.js';
 
@@ -25,6 +31,11 @@ const CHANNELS = [
 ];
 
 export class PeerSession extends EventTarget {
+  #inBand = false;
+  #makingOffer = false;
+  #ignoreOffer = false;
+  #signalQueue = Promise.resolve();
+
   /**
    * @param {RTCConfiguration} rtcConfig
    * @param {'offerer' | 'answerer'} role
@@ -46,11 +57,20 @@ export class PeerSession extends EventTarget {
 
     for (const { name, id } of CHANNELS) {
       const channel = this.pc.createDataChannel(name, { negotiated: true, id, ordered: true });
-      channel.addEventListener('open', () => this.#emit('channel-open', { name }));
+      channel.addEventListener('open', () => {
+        if (name === 'control') this.#enableInBandSignaling();
+        this.#emit('channel-open', { name });
+      });
       channel.addEventListener('close', () => this.#emit('channel-close', { name }));
       channel.addEventListener('message', (event) => {
         const message = decodeMessage(event.data);
-        if (message) this.#emit('message', { channel: name, message });
+        if (!message) return;
+        if (name === 'control' && (message.type === 'sdp' || message.type === 'ice')) {
+          // Strictly sequential: an answer must not overtake the offer it belongs to.
+          this.#signalQueue = this.#signalQueue.then(() => this.#handleSignal(message));
+          return;
+        }
+        this.#emit('message', { channel: name, message });
       });
       this.channels[name] = channel;
     }
@@ -101,6 +121,11 @@ export class PeerSession extends EventTarget {
     await this.pc.setRemoteDescription(answer);
   }
 
+  /** Restarts ICE (new credentials, fresh candidates). Negotiated in-band over the control channel. */
+  restartIce() {
+    if (this.#inBand) this.pc.restartIce();
+  }
+
   /** Sends a protocol message. Returns false if the channel is not open. */
   send(channelName, type, fields) {
     const channel = this.channels[channelName];
@@ -112,6 +137,62 @@ export class PeerSession extends EventTarget {
   close() {
     for (const channel of Object.values(this.channels)) channel.close();
     this.pc.close();
+  }
+
+  // Called once the control channel opens. The copy-paste bootstrap is complete by then, so
+  // negotiationneeded can only mean a real renegotiation (e.g. restartIce()).
+  #enableInBandSignaling() {
+    if (this.#inBand) return;
+    this.#inBand = true;
+
+    this.pc.addEventListener('negotiationneeded', () => this.#onNegotiationNeeded());
+    this.pc.addEventListener('icecandidate', ({ candidate }) => {
+      if (candidate) this.send('control', 'ice', { candidate: candidate.toJSON() });
+    });
+  }
+
+  async #onNegotiationNeeded() {
+    try {
+      this.#makingOffer = true;
+      await this.pc.setLocalDescription();
+      this.send('control', 'sdp', { description: this.pc.localDescription.toJSON() });
+    } catch (error) {
+      this.#emit('signal-error', { error });
+    } finally {
+      this.#makingOffer = false;
+    }
+  }
+
+  async #handleSignal(message) {
+    const { pc } = this;
+    try {
+      if (message.type === 'sdp') {
+        const description = message.description;
+        const validType = description?.type === 'offer' || description?.type === 'answer';
+        if (!validType || typeof description.sdp !== 'string') return;
+
+        const collision = description.type === 'offer' && (this.#makingOffer || pc.signalingState !== 'stable');
+        const polite = this.role === 'answerer';
+        this.#ignoreOffer = !polite && collision;
+        if (this.#ignoreOffer) return;
+
+        await pc.setRemoteDescription({ type: description.type, sdp: description.sdp }); // rolls back on collision
+        if (description.type === 'offer') {
+          await pc.setLocalDescription();
+          this.send('control', 'sdp', { description: pc.localDescription.toJSON() });
+        }
+      } else {
+        const candidate = message.candidate;
+        if (candidate === null || typeof candidate !== 'object') return;
+        try {
+          await pc.addIceCandidate(candidate);
+        } catch (error) {
+          if (!this.#ignoreOffer) throw error; // candidates for an offer we ignored are expected to fail
+        }
+      }
+    } catch (error) {
+      this.#emit('signal-error', { error });
+    }
   }
 
   /** Resolves when gathering completes, or after a timeout with whatever was gathered. */

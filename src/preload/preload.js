@@ -5,6 +5,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('cc', {
+  dev: process.argv.includes('--cc-dev'),
   versions: {
     electron: process.versions.electron,
     chrome: process.versions.chrome,

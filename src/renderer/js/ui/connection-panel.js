@@ -8,6 +8,7 @@ const PHASE_UI = {
   'awaiting-peer':   { primary: 'TERMINATE_LINK',   primaryDanger: true,  primaryEnabled: true,  connectEnabled: false },
   connecting:        { primary: 'TERMINATE_LINK',   primaryDanger: true,  primaryEnabled: true,  connectEnabled: false },
   connected:         { primary: 'TERMINATE_LINK',   primaryDanger: true,  primaryEnabled: true,  connectEnabled: false },
+  reconnecting:      { primary: 'TERMINATE_LINK',   primaryDanger: true,  primaryEnabled: true,  connectEnabled: false },
   failed:            { primary: 'TERMINATE_LINK',   primaryDanger: true,  primaryEnabled: true,  connectEnabled: false },
 };
 
@@ -61,6 +62,7 @@ export function mountConnectionPanel({ connection, localPayload, remotePayload, 
     connectButton.disabled = !ui.connectEnabled;
     remotePayload.readOnly = !ui.connectEnabled;
     remoteCard.classList.toggle('is-online', phase === 'connected');
+    remoteCard.classList.toggle('is-unstable', phase === 'reconnecting');
   }
 
   render(connection.phase);
