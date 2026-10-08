@@ -15,6 +15,8 @@ const APP_HOST = 'cryptchat';
 const APP_ORIGIN = `${APP_SCHEME}://${APP_HOST}`;
 const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
 const ICON_PATH = path.join(__dirname, '..', '..', 'build', 'icon.ico');
+const CONTENT_WIDTH = 978;
+const CONTENT_HEIGHT = 563;
 
 // Permissions the renderer may ask for. Everything else is denied.
 // (Screen capture does not go through this list; see capture.js.)
@@ -96,9 +98,11 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 function createMainWindow() {
+  // Sized by content area (not the OS frame), so the layout gets the same room at any DPI.
   const win = new BrowserWindow({
-    width: 960,
-    height: 600,
+    width: CONTENT_WIDTH,
+    height: CONTENT_HEIGHT,
+    useContentSize: true,
     backgroundColor: '#000000',
     icon: ICON_PATH,
     title: PROFILE ? `CryptChat [${PROFILE}]` : 'CryptChat',
@@ -113,6 +117,8 @@ function createMainWindow() {
     },
   });
 
+  // Never smaller than the designed layout (it would clip); larger is fine.
+  win.setMinimumSize(...win.getSize());
   win.once('ready-to-show', () => win.show());
 
   // No application menu; in development F12 still toggles DevTools.

@@ -25,7 +25,7 @@ body {
 /* Two columns: connection + chat on the left, A/V + log on the right. */
 .app {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 352px 1fr; /* fits "CONNECTION_MATRIX" + [ ? ] + [ ⚙ ] on one line */
   gap: 6px;
   height: 100vh;
   padding: 3px;
