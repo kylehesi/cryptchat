@@ -12,7 +12,7 @@ Peer-to-peer voice, screen sharing and chat for Windows. No accounts, no backend
 Requirements: Windows 10/11, [Node.js LTS](https://nodejs.org), [Git](https://git-scm.com).
 
 ```bat
-git clone https://github.com/<you>/cryptchat.git
+git clone https://github.com/kylehesi/cryptchat.git
 cd cryptchat
 start.cmd
 ```
