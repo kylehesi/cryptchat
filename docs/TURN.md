@@ -5,8 +5,28 @@ many ISPs use **CGNAT**, and some offices block UDP. A **TURN relay** forwards t
 end-to-end encrypted) traffic in those cases. **RELAY_ONLY** mode also uses it to hide your IP
 from the peer.
 
-CryptChat ships **no TURN credentials**. Bring your own server. A €4–5/month VPS is plenty
-for a few people.
+CryptChat ships **no TURN credentials**. There are two options:
+
+- **Cloudflare TURN** (easiest, no server to run). See below.
+- **Your own coturn server** on a small VPS (€4–5/month is plenty for a few people), sections 1–5.
+
+Only **one** side needs TURN to get through CGNAT. With RELAY_ONLY, the side that wants to
+hide its IP needs it.
+
+## Cloudflare TURN
+
+1. In the Cloudflare dashboard, open **Realtime → TURN Server** and create a TURN key.
+   You get a **Turn Token ID** and an **API Token**. Check Cloudflare's current pricing page
+   for the free allowance.
+2. In CryptChat: `[ ⚙ ]` → NETWORK → **CLOUDFLARE_TURN**: paste the Turn Token ID into
+   `TURN_KEY_ID` and the API token into `API_TOKEN`.
+3. Press **TEST_TURN**, then **SAVE**.
+
+How it works: Cloudflare does not hand out fixed TURN passwords. Before each link, CryptChat's
+main process calls Cloudflare's `generate-ice-servers` API with your key and gets credentials
+that are valid for 24 h (cached and reused). The key and token are stored encrypted with
+Windows DPAPI. Anyone who has them can use your TURN quota, so do not share them. Give
+your friend their own key, or let only one side use TURN.
 
 > The relay never sees your content. Media and chat are DTLS-encrypted end to end, and TURN
 > only forwards the encrypted packets. It does see both peers' IP addresses and how much data
@@ -88,5 +108,3 @@ sudo systemctl status coturn
 - Optional: **RELAY_ONLY** to hide your IP from the peer.
 - **SAVE**. The settings are encrypted on disk with Windows DPAPI and apply to the next link.
 
-Only **one** side needs a TURN server to get through CGNAT. With RELAY_ONLY, the side that
-wants to hide its IP needs one.

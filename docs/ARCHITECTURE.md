@@ -186,6 +186,14 @@ CC1.<base64url( deflate-raw( JSON{ t: "offer"|"answer", sdp: "...", v: 1 } ) )>
 
 - STUN: 2 servers by default (one Google, one Cloudflare), editable. More only slows down gathering.
 - TURN: **user-provided** (BYOS) through the settings modal. No credentials are shipped in source code.
+  Two kinds can be combined:
+  - **Cloudflare TURN:** the user stores a TURN key ID + API token. Before each link,
+    `src/main/cloudflare-turn.js` calls `POST rtc.live.cloudflare.com/v1/turn/keys/<id>/credentials/generate-ice-servers`
+    (`ttl` 24 h, cached and reused until less than 1 h is left) and passes back only TURN URLs
+    with credentials. **Port 53 URLs are dropped**: browsers block that port, and with
+    non-trickle gathering a dead URL would only add a timeout. This is the app's only outbound
+    HTTP request, and it runs in the main process (the renderer's CSP allows none).
+  - **Custom TURN** (e.g. coturn): static URL + username + password.
 - **Storage:** `src/main/secure-store.js` validates the settings (URL schemes, lengths, "RELAY_ONLY
   needs TURN") and writes them encrypted with Electron `safeStorage` (Windows DPAPI) to
   `userData/network.bin`, using an atomic write. The renderer only talks to it over IPC.

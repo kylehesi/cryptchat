@@ -508,6 +508,61 @@
   color: var(--accent);
 }
 
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* How to use */
+.modal.modal-help {
+  width: 600px;
+}
+
+.help-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  color: var(--text-dim);
+}
+
+.help-body h3 {
+  margin: 0 0 6px;
+  color: var(--accent);
+  font-size: var(--font-size);
+  letter-spacing: 0.08em;
+}
+
+.help-body p,
+.help-body ol,
+.help-body ul {
+  margin: 0;
+}
+
+.help-body ol,
+.help-body ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 22px;
+}
+
+.help-body p + p,
+.help-body ol + p {
+  margin-top: 6px;
+}
+
+.help-body b {
+  color: var(--text);
+}
+
+.help-body kbd {
+  padding: 0 4px;
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font: inherit;
+  white-space: nowrap;
+}
+
 /* Modal */
 .modal {
   width: 480px;

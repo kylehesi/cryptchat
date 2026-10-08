@@ -114,6 +114,14 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
   - [x] Automated: same code on both sides, MITM fingerprint sets give different codes,
         a tampered fingerprint never connects (DTLS fails), MISMATCH drops both sides
 
+## Phase 8.5 — Test release (before polish)
+- [x] Logo + app icon (dot-matrix purple eagle), `build/icon.ico`, generator in `tools/icon/`
+- [x] In-app **[ ? ] HOW_TO_USE** guide
+- [x] Cloudflare TURN support (key ID + API token, credentials minted per link)
+- [x] `start.cmd` launcher (no installer yet), README quick start
+- [ ] Push to the private GitHub repo
+- [ ] Two-PC tests from phases 2–7 (**you + a friend**)
+
 ## Phase 9 — Polish
 - [ ] Final window size (960×600 target), no scroll
 - [ ] Error messages for every failure path (no mic, permission denied, bad payload, ICE failed)

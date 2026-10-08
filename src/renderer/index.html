@@ -37,10 +37,14 @@
       <section class="panel panel-connection" aria-labelledby="h-connection">
         <header class="panel-header">
           <h2 class="panel-title" id="h-connection"><span class="tag">[ SYS ]</span> ~ CONNECTION_MATRIX</h2>
-          <button class="btn btn-header" id="btn-settings" type="button"
-                  title="Settings" aria-label="Settings">
-            [ <svg class="icon"><use href="#i-gear"/></svg> ]
-          </button>
+          <span class="header-actions">
+            <button class="btn btn-header" id="btn-help" type="button"
+                    title="How to use" aria-label="How to use">[ ? ]</button>
+            <button class="btn btn-header" id="btn-settings" type="button"
+                    title="Settings" aria-label="Settings">
+              [ <svg class="icon"><use href="#i-gear"/></svg> ]
+            </button>
+          </span>
         </header>
         <div class="panel-body stack">
           <label class="field-label" for="local-payload">1. LOCAL_PAYLOAD (OFFER/ANSWER):</label>
@@ -163,7 +167,14 @@
         <legend class="field-label">NETWORK:</legend>
         <label class="field-label" for="net-stun">STUN_SERVERS (one per line):</label>
         <textarea id="net-stun" class="payload payload-short" spellcheck="false"></textarea>
-        <label class="field-label" for="net-turn-urls">TURN_URLS (one per line, optional):</label>
+        <span class="field-label">CLOUDFLARE_TURN (optional, credentials minted per link):</span>
+        <div class="settings-row">
+          <input id="net-cf-key" class="input" type="text" spellcheck="false" autocomplete="off"
+                 placeholder="> TURN_KEY_ID" aria-label="Cloudflare TURN key ID">
+          <input id="net-cf-token" class="input" type="password" autocomplete="off"
+                 placeholder="> API_TOKEN" aria-label="Cloudflare TURN API token">
+        </div>
+        <label class="field-label" for="net-turn-urls">CUSTOM_TURN_URLS (one per line, optional):</label>
         <textarea id="net-turn-urls" class="payload payload-short" spellcheck="false"
                   placeholder="turn:turn.example.com:3478&#10;turns:turn.example.com:5349"></textarea>
         <div class="settings-row">
@@ -183,6 +194,55 @@
     </div>
     <footer class="modal-footer">
       <button class="btn" id="btn-settings-close" type="button">CLOSE</button>
+    </footer>
+  </dialog>
+
+  <!-- How to use -->
+  <dialog id="help-dialog" class="modal modal-help" aria-labelledby="h-help">
+    <header class="panel-header">
+      <h2 class="panel-title" id="h-help"><span class="tag">[ SYS ]</span> ~ HOW_TO_USE</h2>
+    </header>
+    <div class="panel-body help-body">
+      <section>
+        <h3>01 // CONNECT</h3>
+        <ol>
+          <li><b>You:</b> press <kbd>GENERATE_PAYLOAD</kbd>. The OFFER is copied to your clipboard.
+              Send it to your peer through any messenger.</li>
+          <li><b>Peer:</b> paste it into <kbd>REMOTE_PAYLOAD</kbd> and press <kbd>EXECUTE_CONNECT</kbd>.
+              Their ANSWER is copied; they send it back to you.</li>
+          <li><b>You:</b> paste the ANSWER into <kbd>REMOTE_PAYLOAD</kbd> and press <kbd>EXECUTE_CONNECT</kbd>.
+              The link opens and the KERNEL_LOG header shows <kbd>LINK: …</kbd>.</li>
+        </ol>
+        <p>Payloads are single-use. For a new link, generate new ones.</p>
+      </section>
+      <section>
+        <h3>02 // VERIFY</h3>
+        <p>Read the <kbd>VERIFY_CODE</kbd> aloud to each other. Same code: press <kbd>MATCH</kbd>.
+           Different code: press <kbd>MISMATCH</kbd>. Someone altered the payloads; reconnect over a channel you trust.</p>
+      </section>
+      <section>
+        <h3>03 // TALK &amp; CHAT</h3>
+        <p>Pick your microphone in <kbd>MIC_SRC</kbd>. <kbd>TOGGLE_MIC</kbd> mutes you,
+           <kbd>DEAFEN</kbd> mutes everything. Set an alias above the chat, type, press Enter.</p>
+      </section>
+      <section>
+        <h3>04 // SHARE SCREEN</h3>
+        <p><kbd>SHARE_SCR</kbd> → pick a screen or window. <kbd>SHARE_SYSTEM_AUDIO</kbd> sends your PC's sound
+           (your peer never hears their own voice back). <kbd>TEXT/CODE</kbd> = sharp, <kbd>MOTION/GAMES</kbd> = smooth.
+           Watching: <kbd>[FULL]</kbd> for fullscreen, <kbd>[ PIP ]</kbd> for a floating window.</p>
+      </section>
+      <section>
+        <h3>05 // TROUBLESHOOT</h3>
+        <ul>
+          <li><b>"ICE failed":</b> your networks cannot reach each other directly (e.g. mobile/CGNAT).
+              One of you needs a TURN relay: <kbd>[ ⚙ ]</kbd> → NETWORK.</li>
+          <li><b>RELAY_ONLY</b> hides your IP from the peer (needs TURN).</li>
+          <li><b>"DTLS failed":</b> the payloads were altered or mixed up. Start over.</li>
+        </ul>
+      </section>
+    </div>
+    <footer class="modal-footer">
+      <button class="btn" id="btn-help-close" type="button">CLOSE</button>
     </footer>
   </dialog>
 

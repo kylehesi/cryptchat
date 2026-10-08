@@ -5,6 +5,7 @@ const { pathToFileURL } = require('node:url');
 const { app, BrowserWindow, clipboard, ipcMain, Menu, net, protocol, session } = require('electron');
 const { registerCapture } = require('./capture');
 const { registerSecureStore } = require('./secure-store');
+const { registerCloudflareTurn } = require('./cloudflare-turn');
 
 // The renderer is served from a custom, privileged "app://" scheme instead of file://.
 // This gives the page a real secure origin (needed by getUserMedia & co.), lets ES modules
@@ -13,6 +14,7 @@ const APP_SCHEME = 'app';
 const APP_HOST = 'cryptchat';
 const APP_ORIGIN = `${APP_SCHEME}://${APP_HOST}`;
 const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
+const ICON_PATH = path.join(__dirname, '..', '..', 'build', 'icon.ico');
 
 // Permissions the renderer may ask for. Everything else is denied.
 // (Screen capture does not go through this list; see capture.js.)
@@ -98,6 +100,7 @@ function createMainWindow() {
     width: 960,
     height: 600,
     backgroundColor: '#000000',
+    icon: ICON_PATH,
     title: PROFILE ? `CryptChat [${PROFILE}]` : 'CryptChat',
     show: false,
     webPreferences: {
@@ -128,12 +131,16 @@ function createMainWindow() {
 
 Menu.setApplicationMenu(null);
 
+// Own taskbar identity, so Windows shows our icon instead of grouping us under electron.exe.
+app.setAppUserModelId('org.cryptchat.app');
+
 app.whenReady().then(() => {
   registerAppProtocol();
   hardenSession();
   registerIpc();
   registerCapture({ isOwnOrigin });
   registerSecureStore({ isOwnOrigin });
+  registerCloudflareTurn({ isOwnOrigin });
   createMainWindow();
 });
 

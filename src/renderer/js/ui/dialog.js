@@ -1,5 +1,5 @@
-/** Wires the settings <dialog>. Esc closing is handled natively by <dialog>. */
-export function mountSettingsModal({ dialog, openButton, closeButton }) {
+/** Wires a <dialog> to its open/close buttons. Esc closing is handled natively by <dialog>. */
+export function mountDialog({ dialog, openButton, closeButton }) {
   openButton.addEventListener('click', () => dialog.showModal());
   closeButton.addEventListener('click', () => dialog.close());
 

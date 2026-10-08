@@ -6,10 +6,12 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { app, ipcMain, safeStorage } = require('electron');
+const { KEY_ID, API_TOKEN } = require('./cloudflare-turn');
 
 const DEFAULT_NETWORK = Object.freeze({
   stunUrls: ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'],
   turn: { urls: [], username: '', credential: '' },
+  cloudflare: { keyId: '', apiToken: '' },
   relayOnly: false,
 });
 
@@ -47,14 +49,23 @@ function validate(input) {
       username: field(input?.turn?.username, 'TURN username'),
       credential: field(input?.turn?.credential, 'TURN password'),
     },
+    cloudflare: {
+      keyId: field(input?.cloudflare?.keyId, 'Cloudflare key ID').trim(),
+      apiToken: field(input?.cloudflare?.apiToken, 'Cloudflare API token').trim(),
+    },
     relayOnly: input?.relayOnly === true,
   };
 
   if (config.turn.urls.length && (!config.turn.username || !config.turn.credential)) {
     errors.push('TURN needs a username and a password.');
   }
-  if (config.relayOnly && !config.turn.urls.length) {
-    errors.push('RELAY_ONLY requires a TURN server.');
+  const { keyId, apiToken } = config.cloudflare;
+  if (keyId || apiToken) {
+    if (!KEY_ID.test(keyId)) errors.push('Cloudflare TURN key ID looks invalid.');
+    if (!API_TOKEN.test(apiToken)) errors.push('Cloudflare API token looks invalid.');
+  }
+  if (config.relayOnly && !config.turn.urls.length && !keyId) {
+    errors.push('RELAY_ONLY requires a TURN server (custom or Cloudflare).');
   }
   return { config, errors };
 }

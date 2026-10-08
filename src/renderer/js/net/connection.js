@@ -21,7 +21,7 @@
 // v1 keeps a single session. Groups later become a Map<peerId, PeerSession> (ARCHITECTURE §5.1).
 
 import { log } from '../core/logger.js';
-import { buildRtcConfig } from './ice-config.js';
+import { buildRtcConfig, hasAnyTurn, hasCloudflare } from './ice-config.js';
 import { decodePayload, encodePayload, PayloadError } from './payload.js';
 import { PeerSession } from './peer-session.js';
 import { countCandidates, describeRoute, diffSnapshots, getLinkSnapshot } from './stats.js';
@@ -54,7 +54,7 @@ export class Connection extends EventTarget {
     log.info('Gathering ICE candidates for OFFER...');
 
     try {
-      this.#openSession('offerer');
+      this.#openSession('offerer', await this.#resolveCloudflareTurn());
       const offer = await this.session.createOffer();
       await this.#publishLocalPayload(offer);
       this.#setPhase('awaiting-answer');
@@ -115,7 +115,7 @@ export class Connection extends EventTarget {
     log.info(`OFFER accepted (${formatCandidates(offer.sdp)}). Gathering ICE candidates for ANSWER...`);
 
     try {
-      this.#openSession('answerer');
+      this.#openSession('answerer', await this.#resolveCloudflareTurn());
       const answer = await this.session.acceptOffer(offer);
       await this.#publishLocalPayload(answer);
       this.#setPhase('awaiting-peer');
@@ -141,19 +141,34 @@ export class Connection extends EventTarget {
       log.err('Network settings not loaded yet.');
       return false;
     }
-    if (config.relayOnly && !config.turn.urls.length) {
+    if (config.relayOnly && !hasAnyTurn(config)) {
       log.err('RELAY_ONLY is on but no TURN server is configured. Fix it in SETTINGS.');
       return false;
     }
     return true;
   }
 
-  #openSession(role) {
+  /** Fresh Cloudflare TURN credentials if configured (cached in the main process for ~24 h). */
+  async #resolveCloudflareTurn() {
+    const config = this.networkSettings.config;
+    if (!hasCloudflare(config)) return [];
+
+    const result = await window.cc.turn.cloudflare(config.cloudflare.keyId, config.cloudflare.apiToken);
+    if (result.ok) {
+      log.info(`Cloudflare TURN ready (${result.iceServers.flatMap((server) => server.urls).length} URLs).`);
+      return result.iceServers;
+    }
+    if (config.relayOnly && !config.turn.urls.length) throw new Error(`Cloudflare TURN unavailable: ${result.error}`);
+    log.warn(`Cloudflare TURN unavailable (${result.error}). Continuing without it.`);
+    return [];
+  }
+
+  #openSession(role, extraTurn = []) {
     const config = this.networkSettings.config;
     if (config.relayOnly) log.info('RELAY_ONLY: only TURN relay candidates are offered. Your IP stays hidden from the peer.');
-    else if (!config.turn.urls.length) log.info('No TURN relay configured: strict NATs (CGNAT) may fail to connect.');
+    else if (!config.turn.urls.length && !extraTurn.length) log.info('No TURN relay configured: strict NATs (CGNAT) may fail to connect.');
 
-    const session = new PeerSession(buildRtcConfig(config), role);
+    const session = new PeerSession(buildRtcConfig(config, extraTurn), role);
     this.session = session;
 
     session.addEventListener('state', ({ detail }) => this.#onPeerState(session, detail.state));

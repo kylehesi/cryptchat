@@ -16,16 +16,22 @@ import { mountLogPanel } from './ui/log-panel.js';
 import { mountNetworkSettings } from './ui/network-settings-panel.js';
 import { mountScreenPanel } from './ui/screen-panel.js';
 import { mountVerifyPanel } from './ui/verify-panel.js';
-import { mountSettingsModal } from './ui/settings-modal.js';
+import { mountDialog } from './ui/dialog.js';
 
 const $ = (id) => document.getElementById(id);
 
 mountLogPanel($('kernel-log'));
 
-mountSettingsModal({
+mountDialog({
   dialog: $('settings-dialog'),
   openButton: $('btn-settings'),
   closeButton: $('btn-settings-close'),
+});
+
+mountDialog({
+  dialog: $('help-dialog'),
+  openButton: $('btn-help'),
+  closeButton: $('btn-help-close'),
 });
 
 const networkSettings = new NetworkSettings();
@@ -85,6 +91,8 @@ mountNetworkSettings({
   networkSettings,
   els: {
     stun: $('net-stun'),
+    cfKey: $('net-cf-key'),
+    cfToken: $('net-cf-token'),
     turnUrls: $('net-turn-urls'),
     turnUser: $('net-turn-user'),
     turnPass: $('net-turn-pass'),
@@ -129,7 +137,10 @@ log.info(`Runtime: Electron ${electron} / Chromium ${chrome}`);
 networkSettings
   .load()
   .then((config) => {
-    const turn = config.turn.urls.length ? `${config.turn.urls.length} TURN` : 'no TURN';
+    const turnParts = [];
+    if (config.cloudflare?.keyId) turnParts.push('Cloudflare TURN');
+    if (config.turn.urls.length) turnParts.push(`${config.turn.urls.length} custom TURN`);
+    const turn = turnParts.length ? turnParts.join(' + ') : 'no TURN';
     log.info(`Network: ${config.stunUrls.length} STUN, ${turn}${config.relayOnly ? ', RELAY_ONLY' : ''}.`);
   })
   .catch((error) => log.err(`Could not load network settings: ${error.message}`));

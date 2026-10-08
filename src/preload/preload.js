@@ -21,6 +21,10 @@ contextBridge.exposeInMainWorld('cc', {
     /** Validated and encrypted by the main process. @returns {Promise<{ ok: boolean, config?: object, errors: string[] }>} */
     setNetwork: (config) => ipcRenderer.invoke('settings:set-network', config),
   },
+  turn: {
+    /** Short-lived Cloudflare TURN credentials. @returns {Promise<{ ok: boolean, iceServers?: RTCIceServer[], error?: string }>} */
+    cloudflare: (keyId, apiToken) => ipcRenderer.invoke('turn:cloudflare', keyId, apiToken),
+  },
   capture: {
     /** @returns {Promise<{ id: string, name: string, kind: 'screen' | 'window', thumbnail: string | null }[]>} */
     listSources: () => ipcRenderer.invoke('capture:list-sources'),

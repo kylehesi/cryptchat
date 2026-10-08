@@ -4,7 +4,8 @@
 // Events: 'change' { config }
 
 export class NetworkSettings extends EventTarget {
-  /** @type {{ stunUrls: string[], turn: { urls: string[], username: string, credential: string }, relayOnly: boolean } | null} */
+  /** @type {{ stunUrls: string[], turn: { urls: string[], username: string, credential: string },
+   *           cloudflare: { keyId: string, apiToken: string }, relayOnly: boolean } | null} */
   config = null;
   defaults = null;
 
@@ -24,10 +25,6 @@ export class NetworkSettings extends EventTarget {
       this.#emit();
     }
     return result;
-  }
-
-  get hasTurn() {
-    return Boolean(this.config?.turn.urls.length);
   }
 
   #emit() {

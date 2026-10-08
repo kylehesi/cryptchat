@@ -1,22 +1,19 @@
-// TEST_TURN: proves a TURN server + credentials work by asking it for a relay candidate.
+// TEST_TURN: proves TURN servers + credentials work by asking them for a relay candidate.
 
 const TEST_TIMEOUT_MS = 8000;
 
 /**
- * @param {{ urls: string[], username: string, credential: string }} turn
+ * @param {RTCIceServer[]} iceServers  TURN servers to test
  * @returns {Promise<{ ok: boolean, ms: number, relays: string[], errors: string[] }>}
  */
-export async function testTurn(turn) {
+export async function testTurn(iceServers) {
   const started = performance.now();
   const relays = [];
   const errors = [];
 
   let pc;
   try {
-    pc = new RTCPeerConnection({
-      iceServers: [{ urls: turn.urls, username: turn.username, credential: turn.credential }],
-      iceTransportPolicy: 'relay',
-    });
+    pc = new RTCPeerConnection({ iceServers, iceTransportPolicy: 'relay' });
   } catch (error) {
     return { ok: false, ms: 0, relays, errors: [error.message] };
   }
