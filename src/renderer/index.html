@@ -21,6 +21,14 @@
     <symbol id="i-headphones" viewBox="0 0 24 24">
       <path fill="currentColor" d="M12 3a9 9 0 0 0-9 9v7a2 2 0 0 0 2 2h2a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H5a7 7 0 0 1 14 0h-2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2a2 2 0 0 0 2-2v-7a9 9 0 0 0-9-9z"/>
     </symbol>
+    <symbol id="i-mic-off" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1a7 7 0 0 0 6-6.9z"/>
+      <path d="M3 3l18 18" stroke="currentColor" stroke-width="2.4"/>
+    </symbol>
+    <symbol id="i-headphones-off" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 3a9 9 0 0 0-9 9v7a2 2 0 0 0 2 2h2a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H5a7 7 0 0 1 14 0h-2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2a2 2 0 0 0 2-2v-7a9 9 0 0 0-9-9z"/>
+      <path d="M3 3l18 18" stroke="currentColor" stroke-width="2.4"/>
+    </symbol>
   </svg>
 
   <main class="app">
@@ -124,13 +132,22 @@
     </div>
   </main>
 
-  <!-- Settings modal (content arrives in phase 7) -->
+  <!-- Settings modal -->
   <dialog id="settings-dialog" class="modal" aria-labelledby="h-settings">
     <header class="panel-header">
-      <h2 class="panel-title" id="h-settings"><span class="tag">[ SYS ]</span> ~ NETWORK_CONFIG</h2>
+      <h2 class="panel-title" id="h-settings"><span class="tag">[ SYS ]</span> ~ SYSTEM_CONFIG</h2>
     </header>
-    <div class="panel-body">
-      <p class="placeholder-text">[ NO MODULES LOADED ]</p>
+    <div class="panel-body settings-body">
+      <fieldset class="settings-group" id="audio-settings">
+        <legend class="field-label">AUDIO_DSP:</legend>
+        <label class="check"><input type="checkbox" data-key="echoCancellation"> ECHO_CANCELLATION</label>
+        <label class="check"><input type="checkbox" data-key="noiseSuppression"> NOISE_SUPPRESSION</label>
+        <label class="check"><input type="checkbox" data-key="autoGainControl"> AUTO_GAIN_CONTROL</label>
+      </fieldset>
+      <fieldset class="settings-group">
+        <legend class="field-label">NETWORK:</legend>
+        <p class="placeholder-text">[ NO MODULES LOADED ]</p>
+      </fieldset>
     </div>
     <footer class="modal-footer">
       <button class="btn" id="btn-settings-close" type="button">CLOSE</button>

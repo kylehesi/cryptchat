@@ -63,11 +63,17 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
     room-code signaling removes this limit.
 
 ## Phase 5 — Voice
-- [ ] Mic device list, hot-swap, MIC_SRC dropdown
-- [ ] TOGGLE_MIC, DEAFEN (Discord semantics), state synced to the peer's card icons
-- [ ] Speaking indicator on L / R cards
-- [ ] Settings: echo cancellation / noise suppression / AGC toggles, "music mode"
+- [x] Mic device list, hot-swap, MIC_SRC dropdown (falls back to default if a device disappears)
+- [x] TOGGLE_MIC, DEAFEN (Discord semantics), state synced to the peer's card icons
+- [x] Speaking indicator on L / R cards
+- [x] Settings: echo cancellation / noise suppression / AGC toggles
+- [ ] "Music mode" (stereo, high bitrate, no DSP) → moved to phase 6, where it matters for system audio
+- [x] Mic is only captured during a call; idle = no capture (a short probe at boot unlocks device names)
 - **Checkpoint:** a real voice call, with mute/deafen visible on both sides.
+  - [x] Automated with Chromium's fake audio device: audio flows both ways, mute → zero energy at
+        the peer, deafen → peer sees both icons off, unmute-while-deafened undeafens, device
+        switch and DSP toggle mid-call keep audio flowing, mic released after the call
+  - [ ] Real call between two PCs (**needs you**)
 
 ## Phase 6 — Screen share + system audio
 - [ ] Main process source list + terminal-styled source picker

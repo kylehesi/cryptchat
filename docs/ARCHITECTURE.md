@@ -247,10 +247,9 @@ All messages are JSON with a version and a type:
 { "v": 1, "type": "chat",    "id": "uuid", "alias": "NEO", "text": "hello" }
 { "v": 1, "type": "profile", "alias": "NEO" }
 { "v": 1, "type": "bye" }
-{ "v": 1, "type": "state", "mic": false, "deaf": false, "sharing": "screen" }
+{ "v": 1, "type": "state",   "mic": true, "deaf": false }
 { "v": 1, "type": "sdp",   "description": { "type": "offer", "sdp": "..." } }
 { "v": 1, "type": "ice",   "candidate": { ... } }
-{ "v": 1, "type": "ping",  "ts": 1730000000000 }
 ```
 
 - Unknown `type` or `v` → ignore and log. Size limits are enforced, and over-long messages are

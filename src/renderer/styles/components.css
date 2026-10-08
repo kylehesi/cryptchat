@@ -265,6 +265,78 @@
   cursor: not-allowed;
 }
 
+/* Toggle buttons that are "off" (muted mic, deafened) */
+.btn.is-off,
+.btn.is-off:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Peer card live states */
+.peer-status .icon.is-off {
+  color: var(--danger);
+}
+
+.peer-card.is-speaking .avatar {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Settings */
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--border);
+}
+
+.settings-group legend {
+  padding: 0 6px;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* Terminal-style checkbox: [ ] / [x] */
+.check input {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border-strong);
+  appearance: none;
+  cursor: pointer;
+}
+
+.check input:checked {
+  border-color: var(--accent);
+}
+
+.check input:checked::after {
+  width: 6px;
+  height: 6px;
+  background: var(--accent);
+  content: '';
+}
+
+.check input:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
 /* Modal */
 .modal {
   width: 440px;
