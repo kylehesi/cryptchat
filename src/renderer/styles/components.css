@@ -472,6 +472,42 @@
   gap: 10px;
 }
 
+/* Verification code */
+.verify-code {
+  display: grid;
+  place-items: center;
+  min-height: 58px;
+  padding: 6px 8px;
+  background: var(--bg-input);
+  border: 1px solid var(--warn);
+  color: var(--warn);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  word-break: break-word;
+  user-select: all;
+}
+
+.verify-code.is-verified {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.verify-tag {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.verify-tag.is-pending {
+  color: var(--warn);
+}
+
+.verify-tag.is-verified {
+  color: var(--accent);
+}
+
 /* Modal */
 .modal {
   width: 480px;

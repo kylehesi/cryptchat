@@ -48,10 +48,22 @@
                     placeholder="[ WAITING FOR GENERATION ]"></textarea>
           <button class="btn" id="btn-generate" type="button">GENERATE_PAYLOAD</button>
 
-          <label class="field-label gap-top" for="remote-payload">2. REMOTE_PAYLOAD (INJECT):</label>
-          <textarea id="remote-payload" class="payload" spellcheck="false"
-                    placeholder="[ INJECT REMOTE HASH HERE ]"></textarea>
-          <button class="btn" id="btn-connect" type="button">EXECUTE_CONNECT</button>
+          <div class="stack" id="remote-section">
+            <label class="field-label gap-top" for="remote-payload">2. REMOTE_PAYLOAD (INJECT):</label>
+            <textarea id="remote-payload" class="payload" spellcheck="false"
+                      placeholder="[ INJECT REMOTE HASH HERE ]"></textarea>
+            <button class="btn" id="btn-connect" type="button">EXECUTE_CONNECT</button>
+          </div>
+
+          <!-- Replaces the remote section once the link is up -->
+          <div class="stack" id="verify-section" hidden>
+            <span class="field-label gap-top">3. VERIFY_CODE (read aloud, must match):</span>
+            <output class="verify-code" id="verify-code" aria-live="polite">...</output>
+            <div class="settings-row">
+              <button class="btn btn-accent" id="btn-verify-ok" type="button">MATCH</button>
+              <button class="btn btn-danger" id="btn-verify-bad" type="button">MISMATCH</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -59,6 +71,7 @@
       <section class="panel panel-chat" aria-labelledby="h-chat">
         <header class="panel-header">
           <h2 class="panel-title" id="h-chat"><span class="tag">[ SYS ]</span> ~ ENCRYPTED_CHAT</h2>
+          <span class="verify-tag" id="verify-tag" hidden></span>
         </header>
         <div class="panel-body chat-body">
           <input id="chat-alias" class="input" type="text" maxlength="16" spellcheck="false"

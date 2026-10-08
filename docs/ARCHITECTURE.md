@@ -200,9 +200,23 @@ CC1.<base64url( deflate-raw( JSON{ t: "offer"|"answer", sdp: "...", v: 1 } ) )>
 
 ## 6. Verification code (SAS)
 
-Each side reads both DTLS fingerprints from the SDP, sorts them, hashes them (SHA-256) and maps the
-first bits to a word list. Example: `RAVEN-COBALT-ECHO-71`. Both users read it aloud. If it
-matches, nobody is in the middle. It is shown in the UI after connecting.
+Each side takes both DTLS fingerprints from the SDP (`a=fingerprint`), sorts them, and hashes
+`"cryptchat-sas-v1\n" + fp1 + "\n" + fp2` with SHA-256. Bytes 0–3 pick 4 words from a frozen
+256-word list (`security/words.js`), and byte 4 mod 100 gives 2 digits. Example:
+`GALAXY-ACID-TYPHOON-NEPTUNE-23`.
+
+- **Why it works:** DTLS only completes if each certificate matches the fingerprint the *other*
+  side received. A man-in-the-middle has to use his own certificates, so A hashes (A, M1) and B
+  hashes (M2, B), and the codes differ.
+- **Why 4 words + 2 digits (~38 bits) and not 3 words:** the attacker commits to M2 before he
+  sees B's fingerprint, then has to grind M1 until the codes collide. 30 bits would be hours of
+  work, 38 bits is not feasible while the users wait.
+- **UI:** once linked, the REMOTE_PAYLOAD section turns into `3. VERIFY_CODE` with **MATCH**
+  and **MISMATCH**. The chat header shows `[ UNVERIFIED ]` / `[ VERIFIED ]`. MISMATCH terminates
+  the link on both sides.
+- If payloads are altered so that a fingerprint no longer matches the real certificate, DTLS
+  fails. The log says so explicitly ("SECURE HANDSHAKE (DTLS) FAILED … possible tampering")
+  instead of the generic ICE error.
 
 ## 7. Audio design
 

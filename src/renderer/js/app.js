@@ -6,6 +6,7 @@ import { Voice } from './media/voice.js';
 import { VoiceActivity } from './media/voice-activity.js';
 import { Connection } from './net/connection.js';
 import { NetworkSettings } from './net/network-settings.js';
+import { Verification } from './security/verification.js';
 import { mountAudioSettings } from './ui/audio-settings.js';
 import { mountAvPanel } from './ui/av-panel.js';
 import { mountChatPanel } from './ui/chat-panel.js';
@@ -14,6 +15,7 @@ import { mountLinkStatus } from './ui/link-status.js';
 import { mountLogPanel } from './ui/log-panel.js';
 import { mountNetworkSettings } from './ui/network-settings-panel.js';
 import { mountScreenPanel } from './ui/screen-panel.js';
+import { mountVerifyPanel } from './ui/verify-panel.js';
 import { mountSettingsModal } from './ui/settings-modal.js';
 
 const $ = (id) => document.getElementById(id);
@@ -31,6 +33,7 @@ const connection = new Connection(networkSettings);
 const microphone = new Microphone();
 const voice = new Voice({ connection, microphone, activity: new VoiceActivity() });
 const screenShare = new ScreenShare({ connection, voice });
+const verification = new Verification(connection);
 
 mountConnectionPanel({
   connection,
@@ -42,6 +45,18 @@ mountConnectionPanel({
 });
 
 mountLinkStatus({ connection, element: $('link-status') });
+
+mountVerifyPanel({
+  verification,
+  els: {
+    remoteSection: $('remote-section'),
+    verifySection: $('verify-section'),
+    code: $('verify-code'),
+    okButton: $('btn-verify-ok'),
+    badButton: $('btn-verify-bad'),
+    tag: $('verify-tag'),
+  },
+});
 
 mountChatPanel({
   chat: new Chat(connection),
@@ -105,7 +120,7 @@ mountScreenPanel({
 window.addEventListener('beforeunload', () => connection.terminate());
 
 // Development only (never in a packaged build): poke at the live objects from DevTools (F12).
-if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings };
+if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification };
 
 const { electron, chrome } = window.cc.versions;
 log.info('--- SYSTEM BOOT ---');

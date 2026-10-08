@@ -106,9 +106,13 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
   - [ ] With a real coturn VPS across the internet (**needs you**)
 
 ## Phase 8 — Verification code
-- [ ] SAS words from DTLS fingerprints, shown after connect
+- [x] SAS words from DTLS fingerprints, shown after connect (4 words + 2 digits, ~38 bits)
+- [x] MATCH / MISMATCH buttons, `[ VERIFIED ]` tag in the chat header, MISMATCH drops the link
+- [x] Distinct "DTLS failed, possible tampering" error instead of the generic ICE one
 - **Checkpoint:** both sides see the same code. If the payload is tampered with by hand, the
   connection fails or the codes differ.
+  - [x] Automated: same code on both sides, MITM fingerprint sets give different codes,
+        a tampered fingerprint never connects (DTLS fails), MISMATCH drops both sides
 
 ## Phase 9 — Polish
 - [ ] Final window size (960×600 target), no scroll

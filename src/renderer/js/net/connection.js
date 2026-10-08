@@ -267,7 +267,12 @@ export class Connection extends EventTarget {
           session.restartIce();
         } else {
           this.#setPhase('failed');
-          log.err('ICE failed: no working route between peers. A TURN relay may be required. TERMINATE_LINK and retry.');
+          if (session.pc.sctp?.transport.state === 'failed') {
+            // The network path worked, but the certificates did not match the payloads.
+            log.err('SECURE HANDSHAKE (DTLS) FAILED: the payloads do not belong together or were altered in transit. Possible tampering. TERMINATE_LINK and exchange new payloads over a channel you trust.');
+          } else {
+            log.err('ICE failed: no working route between peers. A TURN relay may be required. TERMINATE_LINK and retry.');
+          }
         }
         break;
       default:
