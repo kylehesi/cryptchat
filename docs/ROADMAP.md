@@ -115,7 +115,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
         a tampered fingerprint never connects (DTLS fails), MISMATCH drops both sides
 
 ## Phase 8.5 — Test release (before polish)
-- [x] Logo + app icon (dot-matrix purple eagle), `build/icon.ico`, generator in `tools/icon/`
+- [x] Logo + app icon from the owner's artwork (cropped, watermark-free), `npm run icons` → `tools/icon/build-icons.js`
 - [x] In-app **[ ? ] HOW_TO_USE** guide
 - [x] Cloudflare TURN support (key ID + API token, credentials minted per link)
 - [x] `start.cmd` launcher (no installer yet), README quick start

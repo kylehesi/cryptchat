@@ -9,7 +9,7 @@
   "scripts": {
     "start": "electron .",
     "start:b": "electron . --profile=b",
-    "icons": "electron tools/icon/render.js tools/icon/out && node tools/icon/make-ico.js build/icon.ico tools/icon/out/icon-256.png tools/icon/out/icon-128.png tools/icon/out/icon-64.png tools/icon/out/icon-48.png tools/icon/out/icon-32.png tools/icon/out/icon-16.png"
+    "icons": "electron tools/icon/build-icons.js assets/logo.png"
   },
   "devDependencies": {
     "electron": "^44.7.0"
