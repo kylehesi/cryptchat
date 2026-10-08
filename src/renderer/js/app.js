@@ -1,4 +1,6 @@
 import { log } from './core/logger.js';
+import { Connection } from './net/connection.js';
+import { mountConnectionPanel } from './ui/connection-panel.js';
 import { mountLogPanel } from './ui/log-panel.js';
 import { mountSettingsModal } from './ui/settings-modal.js';
 
@@ -11,6 +13,20 @@ mountSettingsModal({
   openButton: $('btn-settings'),
   closeButton: $('btn-settings-close'),
 });
+
+const connection = new Connection();
+
+mountConnectionPanel({
+  connection,
+  localPayload: $('local-payload'),
+  remotePayload: $('remote-payload'),
+  primaryButton: $('btn-generate'),
+  connectButton: $('btn-connect'),
+  remoteCard: $('peer-remote'),
+});
+
+// Closing the window: let the peer know immediately instead of waiting for an ICE timeout.
+window.addEventListener('beforeunload', () => connection.terminate());
 
 const { electron, chrome } = window.cc.versions;
 log.info('--- SYSTEM BOOT ---');

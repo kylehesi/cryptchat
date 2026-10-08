@@ -25,14 +25,17 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
   log shows `--- SYSTEM BOOT ---`.
 
 ## Phase 2 — Manual connection (the core)
-- [ ] `PeerSession`: transceivers + `control`/`chat` channels created up front (ARCHITECTURE §5.2)
-- [ ] Non-trickle ICE gathering with timeout
-- [ ] `payload.js`: `CC1.` compressed format plus a validation error for bad pastes
-- [ ] Offer/answer flow wired to GENERATE_PAYLOAD / EXECUTE_CONNECT (the UI knows which role it is in)
-- [ ] Connection state logs + selected candidate pair type (`host` / `srflx` / `relay`)
-- [ ] Disconnect / reset button
+- [x] `PeerSession`: transceivers + `control`/`chat` channels created up front (ARCHITECTURE §5.2)
+- [x] Non-trickle ICE gathering with timeout
+- [x] `payload.js`: `CC1.` compressed format plus a validation error for bad pastes
+- [x] Offer/answer flow wired to GENERATE_PAYLOAD / EXECUTE_CONNECT (the UI knows which role it is in)
+- [x] Connection state logs + selected candidate pair type (`host` / `srflx` / `relay`)
+- [x] Disconnect / reset button (TERMINATE_LINK, peer notified with `bye`)
+- [x] Auto-copy of the local payload, `npm run start:b` for a second instance on one PC
 - **Checkpoint:** two app instances on the same PC connect, then two PCs on different networks
   connect. The log reports the route.
+  - [x] Same PC: verified by an automated two-window test
+  - [ ] Two PCs on different networks: **needs you + a friend**
 
 ## Phase 3 — Chat
 - [ ] Message protocol envelope (ARCHITECTURE §9)

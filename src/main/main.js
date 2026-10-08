@@ -2,7 +2,7 @@
 
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { app, BrowserWindow, Menu, net, protocol, session } = require('electron');
+const { app, BrowserWindow, clipboard, ipcMain, Menu, net, protocol, session } = require('electron');
 
 // The renderer is served from a custom, privileged "app://" scheme instead of file://.
 // This gives the page a real secure origin (needed by getUserMedia & co.), lets ES modules
@@ -14,6 +14,15 @@ const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
 
 // Permissions the renderer may ask for. Everything else is denied.
 const ALLOWED_PERMISSIONS = new Set(['media']);
+
+const MAX_CLIPBOARD_CHARS = 64 * 1024;
+
+// Dev helper: `npm run start:b` launches a second, independent instance (own userData) so two
+// copies can connect to each other on one PC.
+const PROFILE = /^--profile=([a-z0-9]+)$/i.exec(process.argv.find((arg) => arg.startsWith('--profile=')) ?? '')?.[1];
+if (PROFILE) {
+  app.setPath('userData', `${app.getPath('userData')}-${PROFILE}`);
+}
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -40,9 +49,11 @@ function registerAppProtocol() {
   });
 }
 
+// Compares scheme + host explicitly: for non-special schemes like app://, WHATWG URL.origin is "null".
 function isOwnOrigin(url) {
   try {
-    return new URL(url).origin === APP_ORIGIN;
+    const parsed = new URL(url);
+    return parsed.protocol === `${APP_SCHEME}:` && parsed.host === APP_HOST;
   } catch {
     return false;
   }
@@ -56,7 +67,18 @@ function hardenSession() {
   });
 
   ses.setPermissionCheckHandler((webContents, permission, requestingOrigin) => {
-    return ALLOWED_PERMISSIONS.has(permission) && requestingOrigin === APP_ORIGIN;
+    return ALLOWED_PERMISSIONS.has(permission) && isOwnOrigin(requestingOrigin);
+  });
+}
+
+function registerIpc() {
+  // Done here rather than with navigator.clipboard: the payload is ready seconds after the
+  // click, when the page's user-activation window may already have expired.
+  ipcMain.handle('clipboard:write', (event, text) => {
+    if (!isOwnOrigin(event.senderFrame?.url)) return false;
+    if (typeof text !== 'string' || text.length > MAX_CLIPBOARD_CHARS) return false;
+    clipboard.writeText(text);
+    return true;
   });
 }
 
@@ -73,7 +95,7 @@ function createMainWindow() {
     width: 960,
     height: 600,
     backgroundColor: '#000000',
-    title: 'CryptChat',
+    title: PROFILE ? `CryptChat [${PROFILE}]` : 'CryptChat',
     show: false,
     webPreferences: {
       preload: path.join(__dirname, '..', 'preload', 'preload.js'),
@@ -105,6 +127,7 @@ Menu.setApplicationMenu(null);
 app.whenReady().then(() => {
   registerAppProtocol();
   hardenSession();
+  registerIpc();
   createMainWindow();
 });
 

@@ -25,7 +25,7 @@ What we promise, and what we do **not** promise. This goes into the README verba
 | Media + chat encrypted in transit | **Yes.** WebRTC mandates DTLS-SRTP (media) and DTLS-SCTP (DataChannel). No plaintext mode exists. |
 | No server reads your content | **Yes.** STUN only sees your IP. TURN relays already-encrypted packets and cannot decrypt them. |
 | Protection against man-in-the-middle | **Only if the payload exchange is trusted, or you verify the SAS code.** The payload contains the DTLS fingerprint. If an attacker swaps it in transit, they can sit in the middle. The **verification code** (section 6) detects this. |
-| Hides your IP from the peer | **No by default.** ICE candidates contain your local and public IPs. **Relay-only mode** hides it (the peer only sees the TURN server's IP). |
+| Hides your IP from the peer | **No by default.** Your *public* IP is in the payload (`srflx` candidate). Your LAN IP is hidden behind a random `.local` mDNS name by Chromium. **Relay-only mode** hides both: the peer only sees the TURN server's IP. |
 | Anonymous / untraceable | **No.** We do not claim this. STUN/TURN operators see IPs, and the way you exchange payloads (WhatsApp, etc.) has its own metadata. |
 
 ## 3. Process layout (Electron)
@@ -142,8 +142,15 @@ crash, and **no dummy black canvas track**. Stopping is `replaceTrack(null)`.
 ### 5.3 Signaling: bootstrap once, then go in-band
 
 1. **Bootstrap (manual, v1):** offer → copy/paste → answer → copy/paste. We use
-   non-trickle ICE: we wait for `iceGatheringState === 'complete'` (with a timeout of about 3 s)
+   non-trickle ICE: we wait for `iceGatheringState === 'complete'` (with a 4 s timeout)
    so each payload is self-contained.
+   The **answerer holds back the offer's candidates** until its own gathering finishes, and
+   only then adds them with `addIceCandidate`. Without this, a fast path (e.g. same PC or LAN)
+   connects within milliseconds, Chromium stops gathering, and the answer ships without its
+   public `srflx` candidate.
+   The UI state machine lives in `net/connection.js`: `idle → gathering → awaiting-answer |
+   awaiting-peer → connecting → connected | failed`. TERMINATE_LINK sends `bye` on the control
+   channel, so the other side drops immediately instead of waiting for an ICE timeout.
 2. **After connect:** any further negotiation (ICE restart after a network change, codec changes,
    future camera) uses the **"perfect negotiation" pattern over the `control` channel**. The
    user never copies anything again for that session.
@@ -159,8 +166,13 @@ CC1.<base64url( deflate-raw( JSON{ t: "offer"|"answer", sdp: "...", v: 1 } ) )>
 
 - `CC1.` prefix: version, and it lets us reject garbage pasted by mistake with a clear error.
 - `CompressionStream('deflate-raw')` is built into Chromium, so no dependency is needed.
-  Expected size is about 40–50 % of the raw SDP. If it is still too long, we can strip
-  unused SDP lines later.
+  Measured: about 2.6k characters per payload (3 media slots + data). That is fine for chat
+  apps. If needed, we can strip unused SDP lines later.
+- Whitespace is stripped before decoding, because chat apps often wrap long strings.
+  Decompression is capped at 256 KB (decompression-bomb guard).
+- The payload is auto-copied through the main process (`cc.clipboard.writeText` → IPC).
+  `navigator.clipboard` would fail, because gathering takes longer than the click's
+  user-activation window.
 - Optional QR rendering later.
 
 ### 5.5 ICE configuration
