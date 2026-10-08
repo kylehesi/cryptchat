@@ -1,0 +1,241 @@
+/* Panel header: "[ SYS ] ~ TITLE" */
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 34px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-title {
+  margin: 0;
+  white-space: nowrap;
+  color: var(--accent);
+  font-size: var(--font-size);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.field-label {
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+
+.placeholder-text {
+  margin: 0;
+  color: var(--text-faint);
+}
+
+.icon {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  background: var(--bg-btn);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font: inherit;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn:active:not(:disabled) {
+  background: var(--bg-btn-active);
+}
+
+.btn:disabled {
+  border-color: var(--border);
+  color: var(--text-faint);
+  cursor: not-allowed;
+}
+
+.btn:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.btn-header {
+  height: 26px;
+  padding: 0 8px;
+}
+
+.btn-tiny {
+  height: 20px;
+  padding: 0 5px;
+  font-size: 11px;
+}
+
+.btn-accent {
+  background: transparent;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-pip {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  height: 26px;
+}
+
+/* Inputs */
+.input,
+.payload,
+.select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font: inherit;
+}
+
+.input {
+  height: 26px;
+  padding: 0 8px;
+}
+
+.payload {
+  height: 58px;
+  padding: 6px 8px;
+  resize: none;
+  word-break: break-all;
+}
+
+.select {
+  height: 30px;
+  padding: 0 28px 0 8px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%2300ff00' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 7px;
+}
+
+.select option {
+  background: var(--bg-input);
+}
+
+.input:focus,
+.payload:focus,
+.select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+::placeholder {
+  color: var(--text-faint);
+  opacity: 1;
+}
+
+/* Peer cards */
+.peer-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 48px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  background: var(--bg-btn-active);
+  border: 1px solid var(--border-strong);
+  font-weight: 700;
+}
+
+.peer-remote .avatar {
+  background: #1a0000;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.peer-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peer-status {
+  display: flex;
+  gap: 10px;
+  color: var(--text-dim);
+}
+
+/* Log lines */
+.log-line {
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.log-ok {
+  color: var(--accent);
+}
+
+.log-warn {
+  color: var(--warn);
+}
+
+.log-err {
+  color: var(--danger);
+}
+
+/* Modal */
+.modal {
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  padding: 0;
+  background: var(--bg-panel);
+  border: 1px solid var(--accent);
+  color: var(--text);
+}
+
+.modal::backdrop {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 16px 14px;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-panel);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+}

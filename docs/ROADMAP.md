@@ -17,10 +17,10 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - **Checkpoint:** `npm start` opens a black window. The DevTools console shows no security warnings.
 
 ## Phase 1 — UI shell (no logic)
-- [ ] `index.html` with the 4 panels, matching the original screenshot
-- [ ] `theme.css` / `layout.css` / `components.css`
-- [ ] `logger.js` → KERNEL_LOG (timestamped lines, levels: info / ok / warn / err)
-- [ ] Settings button opens an empty modal
+- [x] `index.html` with the 4 panels, matching the original screenshot
+- [x] `theme.css` / `layout.css` / `components.css`
+- [x] `logger.js` → KERNEL_LOG (timestamped lines, levels: info / ok / warn / err)
+- [x] Settings button opens an empty modal
 - **Checkpoint:** side-by-side comparison with the old screenshot. Buttons do nothing yet, and the
   log shows `--- SYSTEM BOOT ---`.
 

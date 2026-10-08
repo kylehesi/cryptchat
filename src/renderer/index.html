@@ -6,9 +6,136 @@
         content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>CryptChat</title>
   <link rel="stylesheet" href="styles/theme.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
 </head>
 <body>
-  <pre id="boot"></pre>
+  <!-- Icon sprite: referenced with <use href="#i-..."> -->
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-gear" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/>
+    </symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1a7 7 0 0 0 6-6.9z"/>
+    </symbol>
+    <symbol id="i-headphones" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 3a9 9 0 0 0-9 9v7a2 2 0 0 0 2 2h2a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1H5a7 7 0 0 1 14 0h-2a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2a2 2 0 0 0 2-2v-7a9 9 0 0 0-9-9z"/>
+    </symbol>
+  </svg>
+
+  <main class="app">
+    <div class="col">
+      <!-- CONNECTION_MATRIX -->
+      <section class="panel panel-connection" aria-labelledby="h-connection">
+        <header class="panel-header">
+          <h2 class="panel-title" id="h-connection"><span class="tag">[ SYS ]</span> ~ CONNECTION_MATRIX</h2>
+          <button class="btn btn-header" id="btn-settings" type="button"
+                  title="Settings" aria-label="Settings">
+            [ <svg class="icon"><use href="#i-gear"/></svg> ]
+          </button>
+        </header>
+        <div class="panel-body stack">
+          <label class="field-label" for="local-payload">1. LOCAL_PAYLOAD (OFFER/ANSWER):</label>
+          <textarea id="local-payload" class="payload" readonly spellcheck="false"
+                    placeholder="[ WAITING FOR GENERATION ]"></textarea>
+          <button class="btn" id="btn-generate" type="button">GENERATE_PAYLOAD</button>
+
+          <label class="field-label gap-top" for="remote-payload">2. REMOTE_PAYLOAD (INJECT):</label>
+          <textarea id="remote-payload" class="payload" spellcheck="false"
+                    placeholder="[ INJECT REMOTE HASH HERE ]"></textarea>
+          <button class="btn" id="btn-connect" type="button">EXECUTE_CONNECT</button>
+        </div>
+      </section>
+
+      <!-- ENCRYPTED_CHAT -->
+      <section class="panel panel-chat" aria-labelledby="h-chat">
+        <header class="panel-header">
+          <h2 class="panel-title" id="h-chat"><span class="tag">[ SYS ]</span> ~ ENCRYPTED_CHAT</h2>
+        </header>
+        <div class="panel-body chat-body">
+          <input id="chat-alias" class="input" type="text" maxlength="16" spellcheck="false"
+                 placeholder="> SET ALIAS..." aria-label="Alias">
+          <div id="chat-log" class="chat-log" role="log" aria-live="polite"></div>
+          <form id="chat-form" class="chat-form">
+            <input id="chat-input" class="input" type="text" maxlength="2000" autocomplete="off"
+                   placeholder="> TYPE MESSAGE..." aria-label="Message">
+            <button class="btn" id="btn-send" type="submit">SEND</button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <div class="col">
+      <!-- A.V._INTERFACE -->
+      <section class="panel panel-av" aria-labelledby="h-av">
+        <header class="panel-header">
+          <h2 class="panel-title" id="h-av"><span class="tag">[ SYS ]</span> ~ A.V._INTERFACE</h2>
+        </header>
+        <div class="panel-body av-body">
+          <div class="peers">
+            <article class="peer-card peer-local" id="peer-local">
+              <div class="avatar">L</div>
+              <span class="peer-name">LOCAL_USR</span>
+              <span class="peer-status">
+                <svg class="icon" data-role="mic" aria-label="Microphone"><use href="#i-mic"/></svg>
+                <svg class="icon" data-role="audio" aria-label="Audio output"><use href="#i-headphones"/></svg>
+              </span>
+            </article>
+            <article class="peer-card peer-remote" id="peer-remote">
+              <div class="avatar">R</div>
+              <span class="peer-name">REMOTE_USR</span>
+              <span class="peer-status">
+                <svg class="icon" data-role="mic" aria-label="Microphone"><use href="#i-mic"/></svg>
+                <svg class="icon" data-role="audio" aria-label="Audio output"><use href="#i-headphones"/></svg>
+              </span>
+              <button class="btn btn-tiny" id="btn-fullscreen" type="button">[FULL]</button>
+            </article>
+          </div>
+
+          <div class="controls">
+            <div class="mic-row">
+              <label class="field-label" for="mic-src">MIC_SRC:</label>
+              <select id="mic-src" class="select">
+                <option>[ NO DEVICES ]</option>
+              </select>
+            </div>
+            <div class="btn-row">
+              <button class="btn" id="btn-mic" type="button">TOGGLE_MIC</button>
+              <button class="btn" id="btn-deafen" type="button">DEAFEN</button>
+              <button class="btn" id="btn-share" type="button" disabled>SHARE_SCR</button>
+            </div>
+          </div>
+
+          <div class="screen">
+            <video id="remote-video" autoplay playsinline></video>
+            <button class="btn btn-accent btn-pip" id="btn-pip" type="button">[ PIP ]</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- KERNEL_LOG -->
+      <section class="panel panel-log" aria-labelledby="h-log">
+        <header class="panel-header">
+          <h2 class="panel-title" id="h-log"><span class="tag">[ SYS ]</span> ~ KERNEL_LOG</h2>
+        </header>
+        <div id="kernel-log" class="panel-body kernel-log" role="log" aria-live="polite"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Settings modal (content arrives in phase 7) -->
+  <dialog id="settings-dialog" class="modal" aria-labelledby="h-settings">
+    <header class="panel-header">
+      <h2 class="panel-title" id="h-settings"><span class="tag">[ SYS ]</span> ~ NETWORK_CONFIG</h2>
+    </header>
+    <div class="panel-body">
+      <p class="placeholder-text">[ NO MODULES LOADED ]</p>
+    </div>
+    <footer class="modal-footer">
+      <button class="btn" id="btn-settings-close" type="button">CLOSE</button>
+    </footer>
+  </dialog>
+
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
