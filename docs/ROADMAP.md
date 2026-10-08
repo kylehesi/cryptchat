@@ -38,10 +38,13 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
   - [ ] Two PCs on different networks: **needs you + a friend**
 
 ## Phase 3 — Chat
-- [ ] Message protocol envelope (ARCHITECTURE §9)
-- [ ] Alias (saved locally), terminal-style lines: `[ NEO ] > hello`
-- [ ] `textContent` only, size limits, Enter to send, auto-scroll
+- [x] Message protocol envelope (ARCHITECTURE §9)
+- [x] Alias (saved locally), terminal-style lines: `[ NEO ] > hello`
+- [x] `textContent` only, size limits, Enter to send, auto-scroll
+- [x] Aliases exchanged over `control` (`profile` message) and shown on the L / R cards
+- [x] Control and bidi-override characters stripped; chat locked (`> LINK OFFLINE`) without a link
 - **Checkpoint:** chat both ways. Pasting `<img src=x onerror=alert(1)>` shows up as plain text.
+  Verified by an automated two-window test.
 
 ## Phase 4 — In-band negotiation
 - [ ] Perfect negotiation over the `control` channel

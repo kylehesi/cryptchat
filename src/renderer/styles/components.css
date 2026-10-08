@@ -215,6 +215,36 @@
   color: var(--danger);
 }
 
+/* Chat lines: "[ NEO ] > message" */
+.chat-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.chat-alias {
+  font-weight: 700;
+}
+
+.chat-alias.is-local {
+  color: var(--accent);
+}
+
+.chat-alias.is-remote {
+  color: var(--text);
+}
+
+.chat-text {
+  color: var(--text-dim);
+}
+
+.chat-system {
+  color: var(--text-faint);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+}
+
 /* Modal */
 .modal {
   width: 440px;

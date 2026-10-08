@@ -1,5 +1,7 @@
+import { Chat } from './chat/chat.js';
 import { log } from './core/logger.js';
 import { Connection } from './net/connection.js';
+import { mountChatPanel } from './ui/chat-panel.js';
 import { mountConnectionPanel } from './ui/connection-panel.js';
 import { mountLogPanel } from './ui/log-panel.js';
 import { mountSettingsModal } from './ui/settings-modal.js';
@@ -23,6 +25,17 @@ mountConnectionPanel({
   primaryButton: $('btn-generate'),
   connectButton: $('btn-connect'),
   remoteCard: $('peer-remote'),
+});
+
+mountChatPanel({
+  chat: new Chat(connection),
+  aliasInput: $('chat-alias'),
+  chatLog: $('chat-log'),
+  form: $('chat-form'),
+  messageInput: $('chat-input'),
+  sendButton: $('btn-send'),
+  localName: document.querySelector('#peer-local .peer-name'),
+  remoteName: document.querySelector('#peer-remote .peer-name'),
 });
 
 // Closing the window: let the peer know immediately instead of waiting for an ICE timeout.

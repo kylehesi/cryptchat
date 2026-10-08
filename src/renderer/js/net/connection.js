@@ -1,5 +1,11 @@
 // Manual (copy-paste) signaling: drives one PeerSession through offer → answer → connected.
-// Never touches the DOM; the connection panel listens to the 'phase' and 'local-payload' events.
+// Never touches the DOM.
+//
+// Events (CustomEvent.detail):
+//   'phase'          { phase }              see below
+//   'local-payload'  { payload, type }      a payload is ready to be sent to the peer
+//   'channel-open'   { name }               a DataChannel of the current session opened
+//   'peer-message'   { channel, message }   a protocol message from the peer (except 'bye')
 //
 // Phases:
 //   idle            nothing running
@@ -72,6 +78,11 @@ export class Connection extends EventTarget {
     }
   }
 
+  /** Sends a protocol message to the peer. Returns false if the channel is not open. */
+  send(channel, type, fields) {
+    return this.session?.send(channel, type, fields) ?? false;
+  }
+
   /** Tears down the session and tells the peer, if it can still hear us. */
   terminate() {
     if (!this.session) return;
@@ -110,11 +121,17 @@ export class Connection extends EventTarget {
     this.session = session;
 
     session.addEventListener('state', ({ detail }) => this.#onPeerState(session, detail.state));
+    session.addEventListener('channel-open', ({ detail }) => {
+      if (session === this.session) this.#emit('channel-open', detail);
+    });
     session.addEventListener('message', ({ detail }) => {
+      if (session !== this.session) return;
       if (detail.channel === 'control' && detail.message.type === 'bye') {
         log.warn('Remote peer terminated the link.');
         this.#closeSession();
+        return;
       }
+      this.#emit('peer-message', detail);
     });
   }
 

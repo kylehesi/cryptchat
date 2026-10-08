@@ -237,7 +237,9 @@ matches, nobody is in the middle. It is shown in the UI after connecting.
 All messages are JSON with a version and a type:
 
 ```json
-{ "v": 1, "type": "chat",  "id": "uuid", "alias": "NEO", "text": "hello", "ts": 1730000000000 }
+{ "v": 1, "type": "chat",    "id": "uuid", "alias": "NEO", "text": "hello" }
+{ "v": 1, "type": "profile", "alias": "NEO" }
+{ "v": 1, "type": "bye" }
 { "v": 1, "type": "state", "mic": false, "deaf": false, "sharing": "screen" }
 { "v": 1, "type": "sdp",   "description": { "type": "offer", "sdp": "..." } }
 { "v": 1, "type": "ice",   "candidate": { ... } }
@@ -248,7 +250,10 @@ All messages are JSON with a version and a type:
   dropped.
 - Chat text is always rendered with `textContent`, **never** `innerHTML`. This prevents XSS from
   the peer.
-- Aliases are sanitized (length, charset) on both sides.
+- Aliases are sanitized (length, charset) on both sides: `A–Z 0–9 _ . -`, max 16 characters.
+- Chat text: control characters and bidi overrides (e.g. U+202E) are stripped, max 2000 chars.
+  Messages are timestamped with the **local receive time**, because the peer's clock is not
+  trusted.
 
 ## 10. UI
 
