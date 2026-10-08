@@ -184,13 +184,19 @@ CC1.<base64url( deflate-raw( JSON{ t: "offer"|"answer", sdp: "...", v: 1 } ) )>
 
 ### 5.5 ICE configuration
 
-- STUN: 2 servers (one Google, one Cloudflare). More only slows down gathering.
-- TURN: **user-provided** (BYOS) through the settings modal, stored with Electron `safeStorage`.
-  No credentials are shipped in source code.
-- **Relay-only mode** toggle → `iceTransportPolicy: 'relay'` (hides your IP, requires TURN).
-- A "TEST_TURN" button that gathers candidates and reports whether a `relay` candidate appeared,
-  which proves the credentials work.
-- The README will include a short guide for running your own `coturn` on a cheap VPS.
+- STUN: 2 servers by default (one Google, one Cloudflare), editable. More only slows down gathering.
+- TURN: **user-provided** (BYOS) through the settings modal. No credentials are shipped in source code.
+- **Storage:** `src/main/secure-store.js` validates the settings (URL schemes, lengths, "RELAY_ONLY
+  needs TURN") and writes them encrypted with Electron `safeStorage` (Windows DPAPI) to
+  `userData/network.bin`, using an atomic write. The renderer only talks to it over IPC.
+  New settings apply to the **next** link.
+- **Relay-only mode** → `iceTransportPolicy: 'relay'`: our payload contains only relay candidates,
+  so the peer sees the TURN server's IP, never ours. If no relay candidate can be gathered, no
+  payload is produced (it could never connect) and the user is pointed to TEST_TURN.
+- **TEST_TURN** gathers with `iceTransportPolicy: 'relay'` and reports success with timing, or
+  the server's error (e.g. `401 Unauthorized`) from `icecandidateerror`.
+- Live link stats in the KERNEL_LOG header: route, RTT, up/down bitrate, packet loss.
+- Guide for running your own `coturn`: [TURN.md](TURN.md).
 
 ## 6. Verification code (SAS)
 

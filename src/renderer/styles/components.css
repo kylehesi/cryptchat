@@ -301,6 +301,35 @@
   padding: 0 6px;
 }
 
+.settings-row {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-row > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.payload-short {
+  height: 46px;
+}
+
+.settings-status {
+  min-height: 1.4em;
+  margin: 0;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+}
+
+.settings-status.is-ok {
+  color: var(--accent);
+}
+
+.settings-status.is-err {
+  color: var(--danger);
+}
+
 .check {
   display: flex;
   align-items: center;
@@ -445,12 +474,34 @@
 
 /* Modal */
 .modal {
-  width: 440px;
+  width: 480px;
   max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 24px);
   padding: 0;
   background: var(--bg-panel);
   border: 1px solid var(--accent);
   color: var(--text);
+}
+
+/* Header and footer stay put; only the body scrolls when the window is short. */
+.modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal > .panel-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Scrollable areas are keyboard-focusable; use the theme's focus ring, not Chromium's yellow one. */
+.modal > .panel-body:focus {
+  outline: none;
+}
+
+.modal > .panel-body:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
 }
 
 .modal::backdrop {

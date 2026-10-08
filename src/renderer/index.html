@@ -146,9 +146,26 @@
         <label class="check"><input type="checkbox" data-key="noiseSuppression"> NOISE_SUPPRESSION</label>
         <label class="check"><input type="checkbox" data-key="autoGainControl"> AUTO_GAIN_CONTROL</label>
       </fieldset>
-      <fieldset class="settings-group">
+      <fieldset class="settings-group" id="network-settings">
         <legend class="field-label">NETWORK:</legend>
-        <p class="placeholder-text">[ NO MODULES LOADED ]</p>
+        <label class="field-label" for="net-stun">STUN_SERVERS (one per line):</label>
+        <textarea id="net-stun" class="payload payload-short" spellcheck="false"></textarea>
+        <label class="field-label" for="net-turn-urls">TURN_URLS (one per line, optional):</label>
+        <textarea id="net-turn-urls" class="payload payload-short" spellcheck="false"
+                  placeholder="turn:turn.example.com:3478&#10;turns:turn.example.com:5349"></textarea>
+        <div class="settings-row">
+          <input id="net-turn-user" class="input" type="text" spellcheck="false" autocomplete="off"
+                 placeholder="> TURN_USER" aria-label="TURN username">
+          <input id="net-turn-pass" class="input" type="password" autocomplete="off"
+                 placeholder="> TURN_PASS" aria-label="TURN password">
+        </div>
+        <label class="check"><input type="checkbox" id="net-relay-only"> RELAY_ONLY (hide my IP, needs TURN)</label>
+        <div class="settings-row">
+          <button class="btn" id="btn-net-test" type="button">TEST_TURN</button>
+          <button class="btn" id="btn-net-defaults" type="button">DEFAULTS</button>
+          <button class="btn btn-accent" id="btn-net-save" type="button">SAVE</button>
+        </div>
+        <p class="settings-status" id="net-status" role="status"></p>
       </fieldset>
     </div>
     <footer class="modal-footer">

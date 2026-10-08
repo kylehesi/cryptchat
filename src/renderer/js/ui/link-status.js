@@ -1,6 +1,4 @@
-// "LINK: SRFLX · 23 ms" in the KERNEL_LOG header.
-
-const ROUTE_LABEL = { host: 'HOST', srflx: 'SRFLX', prflx: 'SRFLX', relay: 'RELAY' };
+// "LINK: SRFLX · 23 ms · ↑48k ↓1.2M · LOSS 0.0%" in the KERNEL_LOG header.
 
 export function mountLinkStatus({ connection, element }) {
   let lastStats = null;
@@ -22,8 +20,11 @@ export function mountLinkStatus({ connection, element }) {
     if (phase === 'reconnecting') {
       element.textContent = 'LINK: UNSTABLE';
     } else if (phase === 'connected' && lastStats) {
-      const rtt = lastStats.rttMs != null ? ` · ${lastStats.rttMs} ms` : '';
-      element.textContent = `LINK: ${routeLabel(lastStats.route)}${rtt}`;
+      const parts = [`LINK: ${routeLabel(lastStats.route)}`];
+      if (lastStats.rttMs != null) parts.push(`${lastStats.rttMs} ms`);
+      if (lastStats.upKbps != null) parts.push(`↑${formatRate(lastStats.upKbps)} ↓${formatRate(lastStats.downKbps)}`);
+      if (lastStats.lossPct != null) parts.push(`LOSS ${lastStats.lossPct.toFixed(1)}%`);
+      element.textContent = parts.join(' · ');
     } else if (phase === 'connected' || phase === 'connecting') {
       element.textContent = 'LINK: ...';
     } else {
@@ -36,7 +37,12 @@ export function mountLinkStatus({ connection, element }) {
 
 function routeLabel(route) {
   const types = [route.localType, route.remoteType];
-  if (types.includes('relay')) return ROUTE_LABEL.relay;
-  if (types.every((type) => type === 'host')) return ROUTE_LABEL.host;
-  return ROUTE_LABEL.srflx;
+  if (types.includes('relay')) return 'RELAY';
+  if (types.every((type) => type === 'host')) return 'HOST';
+  return 'SRFLX';
+}
+
+/** kbps → "48k" / "1.2M" (bits per second). */
+function formatRate(kbps) {
+  return kbps >= 1000 ? `${(kbps / 1000).toFixed(1)}M` : `${kbps}k`;
 }

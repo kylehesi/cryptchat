@@ -1,32 +1,57 @@
-// Reads which network route ICE actually picked.
+// Link statistics from RTCPeerConnection.getStats().
 
-/** Returns { localType, remoteType, protocol, relayProtocol, rttMs } for the selected pair, or null. */
-export async function getSelectedRoute(pc) {
+/**
+ * One snapshot of the link. Bitrate and loss come from differences between two snapshots
+ * (see diffSnapshots).
+ * @returns {Promise<{ route: object | null, time: number, bytesSent: number, bytesReceived: number,
+ *                     packetsLost: number, packetsReceived: number }>}
+ */
+export async function getLinkSnapshot(pc) {
   const stats = await pc.getStats();
+  const snapshot = { route: null, time: performance.now(), bytesSent: 0, bytesReceived: 0, packetsLost: 0, packetsReceived: 0 };
 
   let pair = null;
   stats.forEach((report) => {
-    if (report.type === 'transport' && report.selectedCandidatePairId) {
-      pair = stats.get(report.selectedCandidatePairId) ?? pair;
+    if (report.type === 'transport') {
+      snapshot.bytesSent += report.bytesSent ?? 0;
+      snapshot.bytesReceived += report.bytesReceived ?? 0;
+      if (report.selectedCandidatePairId) pair = stats.get(report.selectedCandidatePairId) ?? pair;
+    } else if (report.type === 'inbound-rtp') {
+      snapshot.packetsLost += Math.max(0, report.packetsLost ?? 0);
+      snapshot.packetsReceived += report.packetsReceived ?? 0;
     }
   });
   if (!pair) {
     stats.forEach((report) => {
-      if (!pair && report.type === 'candidate-pair' && report.nominated && report.state === 'succeeded') {
-        pair = report;
-      }
+      if (!pair && report.type === 'candidate-pair' && report.nominated && report.state === 'succeeded') pair = report;
     });
   }
-  if (!pair) return null;
 
-  const local = stats.get(pair.localCandidateId);
-  const remote = stats.get(pair.remoteCandidateId);
+  if (pair) {
+    const local = stats.get(pair.localCandidateId);
+    const remote = stats.get(pair.remoteCandidateId);
+    snapshot.route = {
+      localType: local?.candidateType,
+      remoteType: remote?.candidateType,
+      protocol: local?.protocol,
+      relayProtocol: local?.relayProtocol,
+      rttMs: pair.currentRoundTripTime != null ? Math.round(pair.currentRoundTripTime * 1000) : null,
+    };
+  }
+  return snapshot;
+}
+
+/** { upKbps, downKbps, lossPct } between two snapshots (null fields if not computable). */
+export function diffSnapshots(previous, current) {
+  const seconds = previous ? (current.time - previous.time) / 1000 : 0;
+  if (seconds <= 0) return { upKbps: null, downKbps: null, lossPct: null };
+
+  const lost = current.packetsLost - previous.packetsLost;
+  const received = current.packetsReceived - previous.packetsReceived;
   return {
-    localType: local?.candidateType,
-    remoteType: remote?.candidateType,
-    protocol: local?.protocol,
-    relayProtocol: local?.relayProtocol,
-    rttMs: pair.currentRoundTripTime != null ? Math.round(pair.currentRoundTripTime * 1000) : null,
+    upKbps: Math.max(0, Math.round(((current.bytesSent - previous.bytesSent) * 8) / 1000 / seconds)),
+    downKbps: Math.max(0, Math.round(((current.bytesReceived - previous.bytesReceived) * 8) / 1000 / seconds)),
+    lossPct: lost + received > 0 ? Math.max(0, (lost / (lost + received)) * 100) : 0,
   };
 }
 

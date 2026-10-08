@@ -93,12 +93,17 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
   - [ ] Real two-PC test with a YouTube video (**needs you**)
 
 ## Phase 7 — Settings, TURN, privacy
-- [ ] Settings modal: STUN list, TURN (url/user/pass), relay-only toggle
-- [ ] `safeStorage` encrypted persistence via IPC
-- [ ] TEST_TURN button
-- [ ] Stats readout (RTT, bitrate, packet loss, route)
-- [ ] coturn setup guide in README
+- [x] Settings modal: STUN list, TURN (url/user/pass), relay-only toggle
+- [x] `safeStorage` encrypted persistence via IPC (validated in the main process)
+- [x] TEST_TURN button (shows `401 Unauthorized` etc.)
+- [x] Stats readout (RTT, bitrate, packet loss, route)
+- [x] coturn setup guide → [docs/TURN.md](TURN.md)
 - **Checkpoint:** with relay-only on, the route is `relay` and the peer's log shows only the TURN IP.
+  - [x] Automated with a throwaway local TURN server (node-turn, test only, not a dependency):
+        wrong password → 401, right password → OK, settings file contains no plaintext,
+        relay-only offer has only relay candidates, the peer only sees the TURN IP, the link
+        and chat work over RELAY
+  - [ ] With a real coturn VPS across the internet (**needs you**)
 
 ## Phase 8 — Verification code
 - [ ] SAS words from DTLS fingerprints, shown after connect

@@ -6,7 +6,7 @@
 //   'local-payload'  { payload, type }      a payload is ready to be sent to the peer
 //   'channel-open'   { name }               a DataChannel of the current session opened
 //   'peer-message'   { channel, message }   a protocol message from the peer (except 'bye')
-//   'link-stats'     { route, rttMs }       every 2 s while a link exists (see stats.js)
+//   'link-stats'     { route, rttMs, upKbps, downKbps, lossPct }   every 2 s while linked
 //
 // Phases:
 //   idle            nothing running
@@ -24,7 +24,7 @@ import { log } from '../core/logger.js';
 import { buildRtcConfig } from './ice-config.js';
 import { decodePayload, encodePayload, PayloadError } from './payload.js';
 import { PeerSession } from './peer-session.js';
-import { countCandidates, describeRoute, getSelectedRoute } from './stats.js';
+import { countCandidates, describeRoute, diffSnapshots, getLinkSnapshot } from './stats.js';
 
 const STATS_INTERVAL_MS = 2000;
 const ICE_RESTART_DELAY_MS = 4000; // give ICE a chance to recover by itself first
@@ -39,10 +39,17 @@ export class Connection extends EventTarget {
   #restartTimer = null;
   #lostTimer = null;
   #routeKey = null;
+  #lastSnapshot = null;
+
+  /** @param {import('./network-settings.js').NetworkSettings} networkSettings */
+  constructor(networkSettings) {
+    super();
+    this.networkSettings = networkSettings;
+  }
 
   /** Offerer side: create a session and produce the offer payload. */
   async generateOffer() {
-    if (this.phase !== 'idle') return;
+    if (this.phase !== 'idle' || !this.#checkNetworkReady()) return;
     this.#setPhase('gathering');
     log.info('Gathering ICE candidates for OFFER...');
 
@@ -75,6 +82,7 @@ export class Connection extends EventTarget {
         log.err('Got an OFFER, but a session is already running. TERMINATE_LINK first.');
         return;
       }
+      if (!this.#checkNetworkReady()) return;
       await this.#answer(remote);
     } else {
       if (this.phase !== 'awaiting-answer') {
@@ -127,8 +135,25 @@ export class Connection extends EventTarget {
     }
   }
 
+  #checkNetworkReady() {
+    const config = this.networkSettings.config;
+    if (!config) {
+      log.err('Network settings not loaded yet.');
+      return false;
+    }
+    if (config.relayOnly && !config.turn.urls.length) {
+      log.err('RELAY_ONLY is on but no TURN server is configured. Fix it in SETTINGS.');
+      return false;
+    }
+    return true;
+  }
+
   #openSession(role) {
-    const session = new PeerSession(buildRtcConfig(), role);
+    const config = this.networkSettings.config;
+    if (config.relayOnly) log.info('RELAY_ONLY: only TURN relay candidates are offered. Your IP stays hidden from the peer.');
+    else if (!config.turn.urls.length) log.info('No TURN relay configured: strict NATs (CGNAT) may fail to connect.');
+
+    const session = new PeerSession(buildRtcConfig(config), role);
     this.session = session;
 
     session.addEventListener('state', ({ detail }) => this.#onPeerState(session, detail.state));
@@ -154,6 +179,7 @@ export class Connection extends EventTarget {
     this.session?.close();
     this.session = null;
     this.#routeKey = null;
+    this.#lastSnapshot = null;
     this.#setPhase('idle');
   }
 
@@ -195,8 +221,11 @@ export class Connection extends EventTarget {
   async #pollStats() {
     const session = this.session;
     if (!session) return;
-    const route = await getSelectedRoute(session.pc).catch(() => null);
-    if (session !== this.session || !route) return;
+    const snapshot = await getLinkSnapshot(session.pc).catch(() => null);
+    if (session !== this.session || !snapshot?.route) return;
+    const { route } = snapshot;
+    const rates = diffSnapshots(this.#lastSnapshot, snapshot);
+    this.#lastSnapshot = snapshot;
 
     const key = `${route.localType}/${route.remoteType}/${route.protocol}`;
     if (key !== this.#routeKey) {
@@ -205,7 +234,7 @@ export class Connection extends EventTarget {
       else log.ok(`Route: ${describeRoute(route)}${rtt}`);
       this.#routeKey = key;
     }
-    this.#emit('link-stats', { route, rttMs: route.rttMs });
+    this.#emit('link-stats', { route, rttMs: route.rttMs, ...rates });
   }
 
   async #onPeerState(session, state) {
@@ -249,6 +278,10 @@ export class Connection extends EventTarget {
   async #publishLocalPayload(description) {
     const counts = countCandidates(description.sdp);
     log.info(`ICE candidates: ${formatCounts(counts)}`);
+    if (this.networkSettings.config.relayOnly && !counts.relay) {
+      // A relay-only payload without relay candidates can never connect: refuse to emit it.
+      throw new Error('no relay candidate. The TURN server is unreachable or rejected the credentials. Run TEST_TURN in SETTINGS.');
+    }
     if (!counts.srflx && !counts.relay) {
       log.warn('No public route discovered (STUN unreachable?). Only peers on the same network can connect.');
     }

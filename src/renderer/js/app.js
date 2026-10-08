@@ -5,12 +5,14 @@ import { ScreenShare } from './media/screen.js';
 import { Voice } from './media/voice.js';
 import { VoiceActivity } from './media/voice-activity.js';
 import { Connection } from './net/connection.js';
+import { NetworkSettings } from './net/network-settings.js';
 import { mountAudioSettings } from './ui/audio-settings.js';
 import { mountAvPanel } from './ui/av-panel.js';
 import { mountChatPanel } from './ui/chat-panel.js';
 import { mountConnectionPanel } from './ui/connection-panel.js';
 import { mountLinkStatus } from './ui/link-status.js';
 import { mountLogPanel } from './ui/log-panel.js';
+import { mountNetworkSettings } from './ui/network-settings-panel.js';
 import { mountScreenPanel } from './ui/screen-panel.js';
 import { mountSettingsModal } from './ui/settings-modal.js';
 
@@ -24,7 +26,8 @@ mountSettingsModal({
   closeButton: $('btn-settings-close'),
 });
 
-const connection = new Connection();
+const networkSettings = new NetworkSettings();
+const connection = new Connection(networkSettings);
 const microphone = new Microphone();
 const voice = new Voice({ connection, microphone, activity: new VoiceActivity() });
 const screenShare = new ScreenShare({ connection, voice });
@@ -63,6 +66,21 @@ mountAvPanel({
 
 mountAudioSettings({ microphone, container: $('audio-settings') });
 
+mountNetworkSettings({
+  networkSettings,
+  els: {
+    stun: $('net-stun'),
+    turnUrls: $('net-turn-urls'),
+    turnUser: $('net-turn-user'),
+    turnPass: $('net-turn-pass'),
+    relayOnly: $('net-relay-only'),
+    testButton: $('btn-net-test'),
+    defaultsButton: $('btn-net-defaults'),
+    saveButton: $('btn-net-save'),
+    status: $('net-status'),
+  },
+});
+
 mountScreenPanel({
   screenShare,
   connection,
@@ -87,11 +105,19 @@ mountScreenPanel({
 window.addEventListener('beforeunload', () => connection.terminate());
 
 // Development only (never in a packaged build): poke at the live objects from DevTools (F12).
-if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare };
+if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings };
 
 const { electron, chrome } = window.cc.versions;
 log.info('--- SYSTEM BOOT ---');
 log.info(`Runtime: Electron ${electron} / Chromium ${chrome}`);
+
+networkSettings
+  .load()
+  .then((config) => {
+    const turn = config.turn.urls.length ? `${config.turn.urls.length} TURN` : 'no TURN';
+    log.info(`Network: ${config.stunUrls.length} STUN, ${turn}${config.relayOnly ? ', RELAY_ONLY' : ''}.`);
+  })
+  .catch((error) => log.err(`Could not load network settings: ${error.message}`));
 
 microphone
   .init()

@@ -12,7 +12,7 @@ Peer-to-peer voice, screen sharing and chat for Windows. No accounts, no backend
 
 From then on, voice, screen and chat travel directly between the two PCs. If a direct route is
 impossible (strict NAT / CGNAT), traffic goes through a TURN relay **you** configure, and it stays
-end-to-end encrypted even then.
+end-to-end encrypted even then. See [docs/TURN.md](docs/TURN.md) for a 5-minute coturn setup.
 
 ## Security, honestly
 

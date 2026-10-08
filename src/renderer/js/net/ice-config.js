@@ -1,12 +1,17 @@
-// Builds the RTCConfiguration. TURN servers and relay-only mode come from settings in phase 7.
+// Builds the RTCConfiguration from the network settings (ARCHITECTURE §5.5).
 
-// Two public STUN servers are enough; a long list only slows down candidate gathering.
-const DEFAULT_STUN_URLS = ['stun:stun.l.google.com:19302', 'stun:stun.cloudflare.com:3478'];
+/** @param {{ stunUrls: string[], turn: { urls: string[], username: string, credential: string }, relayOnly: boolean }} config */
+export function buildRtcConfig(config) {
+  const iceServers = [];
+  if (config.stunUrls.length) iceServers.push({ urls: config.stunUrls });
+  if (config.turn.urls.length) {
+    iceServers.push({ urls: config.turn.urls, username: config.turn.username, credential: config.turn.credential });
+  }
 
-export function buildRtcConfig() {
   return {
-    iceServers: [{ urls: DEFAULT_STUN_URLS }],
-    iceTransportPolicy: 'all',
+    iceServers,
+    // Relay-only: we only offer TURN relay candidates, so the peer never learns our IP.
+    iceTransportPolicy: config.relayOnly ? 'relay' : 'all',
     bundlePolicy: 'max-bundle',
   };
 }

@@ -15,6 +15,12 @@ contextBridge.exposeInMainWorld('cc', {
     /** @returns {Promise<boolean>} */
     writeText: (text) => ipcRenderer.invoke('clipboard:write', text),
   },
+  settings: {
+    /** @returns {Promise<{ config: object, defaults: object }>} */
+    getNetwork: () => ipcRenderer.invoke('settings:get-network'),
+    /** Validated and encrypted by the main process. @returns {Promise<{ ok: boolean, config?: object, errors: string[] }>} */
+    setNetwork: (config) => ipcRenderer.invoke('settings:set-network', config),
+  },
   capture: {
     /** @returns {Promise<{ id: string, name: string, kind: 'screen' | 'window', thumbnail: string | null }[]>} */
     listSources: () => ipcRenderer.invoke('capture:list-sources'),

@@ -4,6 +4,7 @@ const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { app, BrowserWindow, clipboard, ipcMain, Menu, net, protocol, session } = require('electron');
 const { registerCapture } = require('./capture');
+const { registerSecureStore } = require('./secure-store');
 
 // The renderer is served from a custom, privileged "app://" scheme instead of file://.
 // This gives the page a real secure origin (needed by getUserMedia & co.), lets ES modules
@@ -132,6 +133,7 @@ app.whenReady().then(() => {
   hardenSession();
   registerIpc();
   registerCapture({ isOwnOrigin });
+  registerSecureStore({ isOwnOrigin });
   createMainWindow();
 });
 
