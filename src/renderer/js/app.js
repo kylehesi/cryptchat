@@ -1,6 +1,7 @@
 import { Chat } from './chat/chat.js';
 import { log } from './core/logger.js';
 import { Microphone } from './media/microphone.js';
+import { ScreenShare } from './media/screen.js';
 import { Voice } from './media/voice.js';
 import { VoiceActivity } from './media/voice-activity.js';
 import { Connection } from './net/connection.js';
@@ -10,6 +11,7 @@ import { mountChatPanel } from './ui/chat-panel.js';
 import { mountConnectionPanel } from './ui/connection-panel.js';
 import { mountLinkStatus } from './ui/link-status.js';
 import { mountLogPanel } from './ui/log-panel.js';
+import { mountScreenPanel } from './ui/screen-panel.js';
 import { mountSettingsModal } from './ui/settings-modal.js';
 
 const $ = (id) => document.getElementById(id);
@@ -25,6 +27,7 @@ mountSettingsModal({
 const connection = new Connection();
 const microphone = new Microphone();
 const voice = new Voice({ connection, microphone, activity: new VoiceActivity() });
+const screenShare = new ScreenShare({ connection, voice });
 
 mountConnectionPanel({
   connection,
@@ -60,11 +63,31 @@ mountAvPanel({
 
 mountAudioSettings({ microphone, container: $('audio-settings') });
 
+mountScreenPanel({
+  screenShare,
+  connection,
+  els: {
+    shareButton: $('btn-share'),
+    dialog: $('source-dialog'),
+    grid: $('source-grid'),
+    refreshButton: $('btn-source-refresh'),
+    audioCheck: $('share-audio'),
+    startButton: $('btn-source-start'),
+    cancelButton: $('btn-source-cancel'),
+    screen: $('screen'),
+    video: $('remote-video'),
+    placeholder: $('screen-placeholder'),
+    badge: $('screen-badge'),
+    fullButton: $('btn-fullscreen'),
+    pipButton: $('btn-pip'),
+  },
+});
+
 // Closing the window: let the peer know immediately instead of waiting for an ICE timeout.
 window.addEventListener('beforeunload', () => connection.terminate());
 
 // Development only (never in a packaged build): poke at the live objects from DevTools (F12).
-if (window.cc.dev) window.__cc = { connection, microphone, voice };
+if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare };
 
 const { electron, chrome } = window.cc.versions;
 log.info('--- SYSTEM BOOT ---');

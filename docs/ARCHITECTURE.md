@@ -212,14 +212,23 @@ matches, nobody is in the middle. It is shown in the UI after connecting.
 
 - Electron's display-media handler can return `audio: 'loopback'` on Windows, which captures
   everything the PC plays, without any virtual cable driver.
-- **Known risk (needs a spike in phase 6):** full-system loopback also captures *our own
-  playback*, so the remote voice would be echoed back to the peer. Options to evaluate, in order:
-  1. Chromium's own-audio suppression constraints (`suppressLocalAudioPlayback`,
-     `restrictOwnAudio`, `systemAudio: 'include'`) — check what our Electron version honors.
-  2. Windows **process loopback** (exclude our own process tree), via a small native module.
-  3. Fallback: allow system audio only when the user is wearing headphones, plus a warning.
-- System audio goes on its **own** transceiver (5.2), separate from the mic, so the peer can
-  control its volume separately.
+- **Echo problem, solved:** full-system loopback would also capture *our own playback* (the
+  peer's voice) and send it back to them. The `restrictOwnAudio: true` constraint on
+  `getDisplayMedia()` excludes our process's audio. Measured in the phase 6 spike (Electron 44):
+
+  | Capture | Our own tone (1 kHz) | Another app's tone (2.5 kHz) |
+  |---|---|---|
+  | plain loopback | −45 dB (captured → echo) | −33 dB |
+  | `restrictOwnAudio: true` | −126 dB (gone) | −32 dB (kept) |
+
+  No native module and no virtual cable needed.
+- System audio goes on its **own** transceiver (5.2), separate from the mic, with DSP off
+  (no echo cancellation / noise suppression / AGC, which would ruin music).
+- **Hi-fi:** the system-audio sender is capped at 128 kbps, and Opus is stereo. Stereo is
+  enabled by adding `stereo=1; sprop-stereo=1; maxaveragebitrate=128000` to that m-line's Opus
+  `fmtp` in every **remote** description before `setRemoteDescription()` (`net/sdp.js`). Remote
+  SDP is our own input, so this is not the local-SDP munging that Chromium restricts.
+  The mic stays mono, voice-tuned.
 
 ### Remote side
 
@@ -232,12 +241,22 @@ matches, nobody is in the middle. It is shown in the UI after connecting.
 - The main process lists sources via `desktopCapturer.getSources` and the renderer shows a
   **terminal-styled source picker** (screens + windows with thumbnails).
 - The pick is passed back through `setDisplayMediaRequestHandler`, and the renderer simply calls
-  `navigator.mediaDevices.getDisplayMedia()`. This is the modern API.
-- Quality presets: `contentHint = 'detail'` (text/code, high res, low fps) or `'motion'`
-  (games/video, 60 fps). Bitrate is capped with `sender.setParameters`.
-- `[FULL]` → Fullscreen API on the video element.
-- `[ PIP ]` → try native `video.requestPictureInPicture()` first (zero extra code). We only build a
-  custom always-on-top `BrowserWindow` if native PiP falls short.
+  `navigator.mediaDevices.getDisplayMedia()`. This is the modern API. A selection is
+  **single-use and expires after 10 s**, so `getDisplayMedia()` can never capture something the
+  user did not just pick. Our own windows are excluded from the list.
+- Quality presets (`media/screen.js`):
+
+  | Preset | `contentHint` | fps | max bitrate | degradation |
+  |---|---|---|---|---|
+  | TEXT/CODE | `detail` | 30 | 4 Mbps | maintain-resolution |
+  | MOTION/GAMES | `motion` | 60 | 8 Mbps | maintain-framerate |
+
+- The peer is told `{ type: 'share', active, audio }` over `control`, which shows or hides the
+  feed. A frozen receiver track alone is not a reliable signal.
+- If the shared window closes, the capture track ends and the broadcast stops by itself.
+- `[FULL]` → Fullscreen API on the screen box (double-clicking the video does the same).
+- `[ PIP ]` → native `video.requestPictureInPicture()`. It works in Electron and floats
+  always-on-top, so no custom window is needed.
 
 ## 9. Message protocol (DataChannels)
 
@@ -248,6 +267,7 @@ All messages are JSON with a version and a type:
 { "v": 1, "type": "profile", "alias": "NEO" }
 { "v": 1, "type": "bye" }
 { "v": 1, "type": "state",   "mic": true, "deaf": false }
+{ "v": 1, "type": "share",   "active": true, "audio": true }
 { "v": 1, "type": "sdp",   "description": { "type": "offer", "sdp": "..." } }
 { "v": 1, "type": "ice",   "candidate": { ... } }
 ```

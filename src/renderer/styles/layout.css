@@ -17,8 +17,9 @@ body {
   font: var(--font-size) / 1.4 var(--font-mono);
 }
 
-.sprite {
-  display: none;
+.sprite,
+[hidden] {
+  display: none !important;
 }
 
 /* Two columns: connection + chat on the left, A/V + log on the right. */
@@ -153,9 +154,15 @@ body {
 }
 
 .screen video {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.screen:fullscreen {
+  border: 0;
 }
 
 /* KERNEL_LOG */

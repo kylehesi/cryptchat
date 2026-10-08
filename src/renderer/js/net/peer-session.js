@@ -14,6 +14,7 @@
 // answerer is the "polite" peer: on an offer collision it rolls back and accepts the other offer.
 
 import { decodeMessage, encodeMessage } from './protocol.js';
+import { enableOpusHifi } from './sdp.js';
 
 const ICE_GATHER_TIMEOUT_MS = 4000;
 
@@ -23,6 +24,13 @@ const MEDIA_SLOTS = [
   { name: 'screen', kind: 'video' },
   { name: 'screenAudio', kind: 'audio' },
 ];
+
+const SCREEN_AUDIO_INDEX = MEDIA_SLOTS.findIndex((slot) => slot.name === 'screenAudio');
+
+// Every remote description passes through here before setRemoteDescription().
+function prepareRemote(description) {
+  return { type: description.type, sdp: enableOpusHifi(description.sdp, SCREEN_AUDIO_INDEX) };
+}
 
 // Negotiated channels exist on both sides with fixed ids, no in-band "open" handshake needed.
 const CHANNELS = [
@@ -93,7 +101,7 @@ export class PeerSession extends EventTarget {
     // can succeed on a fast path within milliseconds, Chromium stops gathering, and the answer
     // ships without our public (srflx) candidate.
     const { sdp, candidates } = splitCandidates(offer.sdp);
-    await this.pc.setRemoteDescription({ type: 'offer', sdp });
+    await this.pc.setRemoteDescription(prepareRemote({ type: 'offer', sdp }));
 
     // Transceivers created by the offer come back in m-line order, as recvonly.
     const transceivers = this.pc.getTransceivers();
@@ -118,7 +126,7 @@ export class PeerSession extends EventTarget {
 
   /** Offerer: applies the remote answer. ICE starts connecting right after. */
   async acceptAnswer(answer) {
-    await this.pc.setRemoteDescription(answer);
+    await this.pc.setRemoteDescription(prepareRemote(answer));
   }
 
   /** Restarts ICE (new credentials, fresh candidates). Negotiated in-band over the control channel. */
@@ -176,7 +184,7 @@ export class PeerSession extends EventTarget {
         this.#ignoreOffer = !polite && collision;
         if (this.#ignoreOffer) return;
 
-        await pc.setRemoteDescription({ type: description.type, sdp: description.sdp }); // rolls back on collision
+        await pc.setRemoteDescription(prepareRemote(description)); // rolls back on collision
         if (description.type === 'offer') {
           await pc.setLocalDescription();
           this.send('control', 'sdp', { description: pc.localDescription.toJSON() });

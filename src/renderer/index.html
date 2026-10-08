@@ -96,7 +96,7 @@
                 <svg class="icon" data-role="mic" aria-label="Microphone"><use href="#i-mic"/></svg>
                 <svg class="icon" data-role="audio" aria-label="Audio output"><use href="#i-headphones"/></svg>
               </span>
-              <button class="btn btn-tiny" id="btn-fullscreen" type="button">[FULL]</button>
+              <button class="btn btn-tiny" id="btn-fullscreen" type="button" disabled>[FULL]</button>
             </article>
           </div>
 
@@ -114,9 +114,11 @@
             </div>
           </div>
 
-          <div class="screen">
-            <video id="remote-video" autoplay playsinline></video>
-            <button class="btn btn-accent btn-pip" id="btn-pip" type="button">[ PIP ]</button>
+          <div class="screen" id="screen">
+            <video id="remote-video" autoplay playsinline muted hidden></video>
+            <p class="screen-placeholder" id="screen-placeholder">[ NO INCOMING FEED ]</p>
+            <p class="screen-badge" id="screen-badge" hidden></p>
+            <button class="btn btn-accent btn-pip" id="btn-pip" type="button" disabled>[ PIP ]</button>
           </div>
         </div>
       </section>
@@ -151,6 +153,28 @@
     </div>
     <footer class="modal-footer">
       <button class="btn" id="btn-settings-close" type="button">CLOSE</button>
+    </footer>
+  </dialog>
+
+  <!-- Screen/window picker -->
+  <dialog id="source-dialog" class="modal modal-wide" aria-labelledby="h-source">
+    <header class="panel-header">
+      <h2 class="panel-title" id="h-source"><span class="tag">[ SYS ]</span> ~ SELECT_SOURCE</h2>
+      <button class="btn btn-header" id="btn-source-refresh" type="button">[ REFRESH ]</button>
+    </header>
+    <div class="panel-body source-body">
+      <div class="source-grid" id="source-grid" role="listbox" aria-label="Capture sources"></div>
+      <div class="source-options">
+        <label class="check"><input type="checkbox" id="share-audio" checked> SHARE_SYSTEM_AUDIO</label>
+        <span class="source-quality" role="radiogroup" aria-label="Quality">
+          <label class="check"><input type="radio" name="share-preset" value="detail" checked> TEXT/CODE</label>
+          <label class="check"><input type="radio" name="share-preset" value="motion"> MOTION/GAMES</label>
+        </span>
+      </div>
+    </div>
+    <footer class="modal-footer">
+      <button class="btn" id="btn-source-cancel" type="button">CANCEL</button>
+      <button class="btn btn-accent" id="btn-source-start" type="button" disabled>START_BROADCAST</button>
     </footer>
   </dialog>
 

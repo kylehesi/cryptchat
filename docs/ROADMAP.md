@@ -76,14 +76,21 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
   - [ ] Real call between two PCs (**needs you**)
 
 ## Phase 6 — Screen share + system audio
-- [ ] Main process source list + terminal-styled source picker
-- [ ] `setDisplayMediaRequestHandler` → `getDisplayMedia`
-- [ ] `replaceTrack` on the pre-made video transceiver, plus stop sharing
-- [ ] Quality preset (text vs. motion), bitrate cap
-- [ ] `[FULL]` and `[ PIP ]` (native PiP first)
-- [ ] **Spike:** system audio loopback without echoing the peer's voice (ARCHITECTURE §7)
+- [x] Main process source list + terminal-styled source picker (own windows excluded)
+- [x] `setDisplayMediaRequestHandler` → `getDisplayMedia` (single-use, 10 s selection)
+- [x] `replaceTrack` on the pre-made video transceiver, plus stop sharing; auto-stop when the
+      shared window closes
+- [x] Quality preset (text vs. motion), bitrate cap
+- [x] `[FULL]` and `[ PIP ]` (native PiP works, so no custom window)
+- [x] **Spike:** system audio loopback without echoing the peer's voice → solved with
+      `restrictOwnAudio` (ARCHITECTURE §7)
+- [x] "Music mode" for system audio: stereo Opus at 128 kbps, DSP off
 - **Checkpoint:** share a window, then switch to the full screen. Watch it in PiP. Share a YouTube
   video with sound, and the peer does not hear their own voice echoed back.
+  - [x] Automated (test-pattern window, never the real desktop): picker, feed at the peer,
+        encoder settings, system audio arrives stereo at ~128 kbps, PiP, fullscreen, stop,
+        auto-stop on window close
+  - [ ] Real two-PC test with a YouTube video (**needs you**)
 
 ## Phase 7 — Settings, TURN, privacy
 - [ ] Settings modal: STUN list, TURN (url/user/pass), relay-only toggle

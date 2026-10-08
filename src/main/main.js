@@ -3,6 +3,7 @@
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const { app, BrowserWindow, clipboard, ipcMain, Menu, net, protocol, session } = require('electron');
+const { registerCapture } = require('./capture');
 
 // The renderer is served from a custom, privileged "app://" scheme instead of file://.
 // This gives the page a real secure origin (needed by getUserMedia & co.), lets ES modules
@@ -13,7 +14,8 @@ const APP_ORIGIN = `${APP_SCHEME}://${APP_HOST}`;
 const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
 
 // Permissions the renderer may ask for. Everything else is denied.
-const ALLOWED_PERMISSIONS = new Set(['media']);
+// (Screen capture does not go through this list; see capture.js.)
+const ALLOWED_PERMISSIONS = new Set(['media', 'fullscreen']);
 
 const MAX_CLIPBOARD_CHARS = 64 * 1024;
 
@@ -129,6 +131,7 @@ app.whenReady().then(() => {
   registerAppProtocol();
   hardenSession();
   registerIpc();
+  registerCapture({ isOwnOrigin });
   createMainWindow();
 });
 

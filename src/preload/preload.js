@@ -15,4 +15,10 @@ contextBridge.exposeInMainWorld('cc', {
     /** @returns {Promise<boolean>} */
     writeText: (text) => ipcRenderer.invoke('clipboard:write', text),
   },
+  capture: {
+    /** @returns {Promise<{ id: string, name: string, kind: 'screen' | 'window', thumbnail: string | null }[]>} */
+    listSources: () => ipcRenderer.invoke('capture:list-sources'),
+    /** Arms the next getDisplayMedia() call with this source. @returns {Promise<boolean>} */
+    select: (id, withAudio) => ipcRenderer.invoke('capture:select', id, withAudio),
+  },
 });
