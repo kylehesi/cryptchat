@@ -105,7 +105,8 @@ function createMainWindow() {
     height: CONTENT_HEIGHT,
     useContentSize: true,
     backgroundColor: '#000000',
-    icon: ICON_PATH,
+    // Installed builds use the icon embedded in CryptChat.exe; build/ is not packaged.
+    icon: app.isPackaged ? undefined : ICON_PATH,
     title: PROFILE ? `CryptChat [${PROFILE}]` : 'CryptChat',
     show: false,
     webPreferences: {

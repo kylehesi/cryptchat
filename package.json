@@ -2,16 +2,27 @@
   "name": "cryptchat",
   "productName": "CryptChat",
   "version": "0.1.0",
-  "description": "Peer-to-peer voice, screen sharing and chat. No accounts, no backend.",
+  "description": "Peer-to-peer voice, screen sharing, file transfer and chat for Windows. No accounts, no backend.",
+  "author": "kylehesi",
+  "homepage": "https://github.com/kylehesi/cryptchat",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kylehesi/cryptchat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kylehesi/cryptchat/issues"
+  },
   "main": "src/main/main.js",
   "private": true,
   "license": "GPL-3.0-only",
   "scripts": {
     "start": "electron .",
     "start:b": "electron . --profile=b",
-    "icons": "electron tools/icon/build-icons.js assets/logo.png"
+    "icons": "electron tools/icon/build-icons.js assets/logo.png",
+    "dist": "electron-builder --win --publish never"
   },
   "devDependencies": {
-    "electron": "^44.7.0"
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
   }
 }

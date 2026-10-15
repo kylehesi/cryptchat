@@ -1,0 +1,59 @@
+# Builds the Windows installer on GitHub's servers.
+#   - Push a tag like v0.1.0  → builds and creates a DRAFT GitHub Release with the installer.
+#   - "Run workflow" by hand  → builds and keeps the installer as a downloadable artifact.
+# Code signing is not wired in yet; see docs/RELEASING.md.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the draft release
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check that the tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $version" >&2
+            exit 1
+          fi
+
+      - name: Build installer
+        run: npm run dist
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CryptChat-Setup
+          path: dist/CryptChat-Setup-*.exe
+          if-no-files-found: error
+
+      - name: Create draft GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum CryptChat-Setup-*.exe > SHA256SUMS.txt
+          gh release create "$GITHUB_REF_NAME" CryptChat-Setup-*.exe SHA256SUMS.txt \
+            --draft --generate-notes --title "CryptChat $GITHUB_REF_NAME"

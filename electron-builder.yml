@@ -1,0 +1,43 @@
+# Windows installer build:  npm run dist   →  dist/CryptChat-Setup-<version>.exe
+# Release builds run in GitHub Actions (.github/workflows/release.yml), where code signing happens.
+
+appId: org.cryptchat.app          # must match app.setAppUserModelId() in src/main/main.js
+productName: CryptChat
+copyright: Copyright (C) 2026 kylehesi. Licensed under GPL-3.0.
+
+directories:
+  output: dist
+  buildResources: build
+
+# Only what the app needs at runtime goes into the package.
+files:
+  - src/**/*
+  - package.json
+  - LICENSE
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  artifactName: CryptChat-Setup-${version}.${ext}
+  # No local signing. Signed builds come from CI (see docs/RELEASING.md).
+  signAndEditExecutable: true
+
+nsis:
+  oneClick: false                 # a normal wizard: license, folder, finish
+  perMachine: false               # per-user install into %LOCALAPPDATA%\Programs ...
+  allowElevation: false           # ... so it never asks for administrator rights (no UAC prompt)
+  allowToChangeInstallationDirectory: true
+  license: LICENSE
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico
+  installerHeaderIcon: build/icon.ico
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: CryptChat
+  runAfterFinish: true
+  deleteAppDataOnUninstall: false # keep the user's settings unless they delete them
+
+publish: null

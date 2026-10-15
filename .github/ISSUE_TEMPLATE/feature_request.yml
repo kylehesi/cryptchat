@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest an idea or improvement
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How should it work? Mock-ups or examples welcome.
+    validations:
+      required: true
+  - type: textarea
+    id: privacy
+    attributes:
+      label: Privacy impact
+      description: Would this need a server, send data anywhere, or reveal anything about the user? ("None" is a fine answer.)

@@ -1,0 +1,59 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Security problems go to SECURITY.md, not here.**
+        Please remove IP addresses and payload codes from logs before posting.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Connecting / payloads
+        - Voice
+        - Screen share
+        - File transfer
+        - Chat
+        - Settings / TURN
+        - Installer
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: KERNEL_LOG
+      description: Copy the relevant lines from the KERNEL_LOG panel (remove IPs and payloads).
+      render: text
+  - type: input
+    id: version
+    attributes:
+      label: CryptChat version
+      placeholder: e.g. 0.1.0, or "source, commit abc1234"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: e.g. Windows 11 24H2
+  - type: dropdown
+    id: network
+    attributes:
+      label: Network
+      options:
+        - Both on home internet
+        - One or both on mobile data
+        - Same local network
+        - Corporate / school network
+        - Not sure

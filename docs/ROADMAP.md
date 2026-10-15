@@ -143,9 +143,14 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [ ] README: screenshots, honest security section, usage guide
 
 ## Phase 10 — Release
-- [ ] electron-builder NSIS installer, app icon, version 1.0.0
-- [ ] GitHub Release with the `.exe` and checksums
-- [ ] Note: the build is unsigned, so Windows SmartScreen will warn. Document "More info → Run anyway".
+- [x] electron-builder NSIS installer (`npm run dist`): per-user, no UAC prompt, license page,
+      shortcuts, app icon, version info. Only `src/`, `package.json` and `LICENSE` are packaged
+- [x] GitHub Actions workflow: tag `v*` → build on Windows → draft Release with `.exe` + `SHA256SUMS.txt`
+- [x] Repo hygiene: SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, issue/PR templates, topics
+- [ ] **Code signing.** Unsigned builds get a SmartScreen warning, and **Smart App Control blocks
+      them outright** (verified on the dev PC). Plan: apply to SignPath Foundation (free for open
+      source) → sign app exe, uninstaller and installer in CI. See [RELEASING.md](RELEASING.md)
+- [ ] Version 1.0.0
 
 ---
 

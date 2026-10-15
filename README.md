@@ -2,12 +2,25 @@
 
 # CryptChat
 
-Peer-to-peer voice, screen sharing and chat for Windows. No accounts, no backend, no middleman.
+Peer-to-peer voice, screen sharing, file transfer and chat for Windows. No accounts, no
+backend, no middleman.
 
 > **Status:** pre-release (v0.1). Works end to end; being tested between real PCs.
 > See [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## Quick start
+## Install
+
+### Installer
+
+Download `CryptChat-Setup-<version>.exe` from [Releases](https://github.com/kylehesi/cryptchat/releases)
+and run it. The installer is per user and never asks for administrator rights.
+
+> **Builds are not code-signed yet.** Windows will show *"Windows protected your PC"*: click
+> **More info → Run anyway**. On PCs with **Smart App Control** turned on (Windows 11),
+> unsigned apps are blocked and cannot be allowed. Use the source version below until signed
+> builds are available ([why](docs/RELEASING.md#why-windows-warns-and-how-to-stop-it)).
+
+### From source (works everywhere, including Smart App Control)
 
 Requirements: Windows 10/11, [Node.js LTS](https://nodejs.org), [Git](https://git-scm.com).
 
@@ -18,9 +31,8 @@ start.cmd
 ```
 
 `start.cmd` installs the dependencies on the first run and then launches the app. You can also
-run `npm install` once and `npm start` afterwards.
-
-There is no installer yet. That comes with v1.0.
+run `npm install` once and `npm start` afterwards. To build the installer yourself, run
+`npm run dist` (see [docs/RELEASING.md](docs/RELEASING.md)).
 
 ## How it works
 
@@ -29,8 +41,8 @@ There is no installer yet. That comes with v1.0.
 3. You paste the answer and click **EXECUTE_CONNECT**. A direct, encrypted WebRTC tunnel opens.
 4. Read the **VERIFY_CODE** aloud to each other. If it matches, nobody is in the middle.
 
-From then on, voice, screen (with system audio) and chat travel directly between the two PCs.
-The in-app **[ ? ]** button has the full guide.
+From then on, voice, screen (with system audio), files and chat travel directly between the
+two PCs. The in-app **[ ? ]** button has the full guide.
 
 Most home networks connect directly. If both sides are behind strict NATs (mobile data, some
 ISPs' CGNAT), a **TURN relay** is needed. Add a Cloudflare TURN key or your own coturn server
@@ -42,15 +54,24 @@ through the relay.
 - All traffic is encrypted (WebRTC DTLS-SRTP). There is no unencrypted mode.
 - By default **your peer can see your public IP address**. Enable **RELAY_ONLY** to hide it.
 - Compare the **verification code** aloud to make sure nobody tampered with the payloads.
+- Files are only saved after you accept them, into `Downloads\CryptChat`.
 - Settings (including TURN secrets) are encrypted on disk with Windows DPAPI.
 - CryptChat is **not** an anonymity tool.
 
-Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Found a vulnerability? See
+[SECURITY.md](SECURITY.md).
 
 ## Tech
 
 Electron · WebRTC · vanilla JavaScript (ES modules) · no UI framework.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
-GPL-3.0
+CryptChat is free software under the [GNU General Public License v3.0](LICENSE).
+
+The installer bundles [Electron](https://www.electronjs.org) (MIT) and Chromium, whose
+licenses ship next to the app as `LICENSE.electron.txt` and `LICENSES.chromium.html`.
