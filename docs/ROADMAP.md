@@ -136,6 +136,14 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] `[ + ]` button and drag & drop onto the chat, progress / speed / ETA, OPEN_FOLDER
 - [ ] Two-PC test over TURN (**you + a friend**)
 
+## Phase 8.7 — Screen-share quality
+- [x] Bench: codec × bitrate × preset on a text + motion test window (PSNR, fps, encoder, CPU)
+- [x] Codec order AV1 → VP9 → VP8 → H.264; switch without renegotiation (`encodings[].codec`)
+- [x] AUTO steps down when the encoder is CPU-bound; SCREEN_CODEC setting for a fixed codec
+- [x] Live TX/RX stats over the feed (codec, resolution, fps, bitrate, limit, loss)
+- [ ] Two-PC test on mobile data / TURN, reading the TX/RX lines (**you + a friend**)
+- [ ] If bandwidth turns out to be the limit there: faster bitrate ramp-up, resolution presets
+
 ## Phase 9 — Polish
 - [ ] Final window size (960×600 target), no scroll
 - [ ] Error messages for every failure path (no mic, permission denied, bad payload, ICE failed)
@@ -162,7 +170,6 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - **Group calls (3–4, mesh)**: more `PeerSession`s in the map. Realistically this needs room-code
   signaling first, because copy-pasting with 3 people means 3 separate exchanges, and with 4 it
   means 6.
-- Screen-share quality on weak links (codec choice, resolution scaling, stats-driven presets)
 - Camera
 - Linux / macOS builds
 - Localisation

@@ -33,6 +33,25 @@ function prepareRemote(description) {
   return { type: description.type, sdp: enableOpusHifi(description.sdp, SCREEN_AUDIO_INDEX) };
 }
 
+// Screen-share codec order, best first. Measured on screen content (ARCHITECTURE §8): AV1 keeps
+// text sharp at low bitrates, VP9 is next (often hardware), VP8 is the safe baseline, and
+// hardware H.264 smears small text. All are still negotiated, so the sender can switch between
+// them later with setParameters() (see media/screen.js) without renegotiating.
+export const SCREEN_CODEC_ORDER = ['video/AV1', 'video/VP9', 'video/VP8', 'video/H264'];
+
+function preferScreenCodecs(transceiver) {
+  const codecs = RTCRtpReceiver.getCapabilities('video')?.codecs ?? [];
+  const rank = (codec) => {
+    const index = SCREEN_CODEC_ORDER.indexOf(codec.mimeType);
+    return index === -1 ? SCREEN_CODEC_ORDER.length : index; // rtx/red/fec and others keep their place after
+  };
+  try {
+    transceiver.setCodecPreferences([...codecs].sort((a, b) => rank(a) - rank(b)));
+  } catch {
+    // Unusual codec list: keep Chromium's default order rather than failing the call.
+  }
+}
+
 // Negotiated channels exist on both sides with fixed ids, no in-band "open" handshake needed.
 const CHANNELS = [
   { name: 'control', id: 0 },
@@ -62,6 +81,7 @@ export class PeerSession extends EventTarget {
       for (const slot of MEDIA_SLOTS) {
         this.slots[slot.name] = this.pc.addTransceiver(slot.kind, { direction: 'sendrecv' });
       }
+      preferScreenCodecs(this.slots.screen);
     }
 
     for (const { name, id } of CHANNELS) {
@@ -123,6 +143,7 @@ export class PeerSession extends EventTarget {
       transceiver.direction = 'sendrecv';
       this.slots[slot.name] = transceiver;
     });
+    preferScreenCodecs(this.slots.screen); // the answer lists codecs in our order
 
     await this.pc.setLocalDescription();
     await this.#waitForIceGathering();

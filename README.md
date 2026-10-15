@@ -2,11 +2,14 @@
 
 # CryptChat
 
+[![Version](https://img.shields.io/github/package-json/v/kylehesi/cryptchat?label=version&color=00ff00)](CHANGELOG.md)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
+
 Peer-to-peer voice, screen sharing, file transfer and chat for Windows. No accounts, no
 backend, no middleman.
 
-> **Status:** pre-release (v0.1). Works end to end; being tested between real PCs.
-> See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status:** pre-release. Works end to end; being tested between real PCs.
+> What changed: [CHANGELOG.md](CHANGELOG.md) · What is next: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Install
 

@@ -388,6 +388,22 @@
   font-size: 11px;
 }
 
+.screen-badge {
+  white-space: pre;
+}
+
+.screen-stats {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  margin: 0;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid var(--border-strong);
+  color: var(--text-dim);
+  font-size: 11px;
+}
+
 /* Source picker */
 .modal.modal-wide {
   width: 720px;
@@ -561,6 +577,12 @@
 
 .verify-tag.is-verified {
   color: var(--accent);
+}
+
+.app-version {
+  align-self: center;
+  margin-right: auto;
+  color: var(--text-faint);
 }
 
 .header-actions {

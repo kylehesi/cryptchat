@@ -135,6 +135,8 @@ mountScreenPanel({
     video: $('remote-video'),
     placeholder: $('screen-placeholder'),
     badge: $('screen-badge'),
+    rxStats: $('screen-rx'),
+    codecSelect: $('video-codec'),
     fullButton: $('btn-fullscreen'),
     pipButton: $('btn-pip'),
   },
@@ -147,7 +149,8 @@ window.addEventListener('beforeunload', () => connection.terminate());
 if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification, transfers };
 
 const { electron, chrome } = window.cc.versions;
-log.info('--- SYSTEM BOOT ---');
+log.info(`--- SYSTEM BOOT --- CryptChat v${window.cc.version}`);
+$('app-version').textContent = `CryptChat v${window.cc.version}`;
 log.info(`Runtime: Electron ${electron} / Chromium ${chrome}`);
 
 networkSettings

@@ -138,6 +138,7 @@
             <video id="remote-video" autoplay playsinline muted hidden></video>
             <p class="screen-placeholder" id="screen-placeholder">[ NO INCOMING FEED ]</p>
             <p class="screen-badge" id="screen-badge" hidden></p>
+            <p class="screen-stats" id="screen-rx" hidden></p>
             <button class="btn btn-accent btn-pip" id="btn-pip" type="button" disabled>[ PIP ]</button>
           </div>
         </div>
@@ -165,6 +166,17 @@
         <label class="check"><input type="checkbox" data-key="echoCancellation"> ECHO_CANCELLATION</label>
         <label class="check"><input type="checkbox" data-key="noiseSuppression"> NOISE_SUPPRESSION</label>
         <label class="check"><input type="checkbox" data-key="autoGainControl"> AUTO_GAIN_CONTROL</label>
+      </fieldset>
+      <fieldset class="settings-group">
+        <legend class="field-label">VIDEO:</legend>
+        <label class="field-label" for="video-codec">SCREEN_CODEC:</label>
+        <select id="video-codec" class="select">
+          <option value="auto">AUTO (AV1 → VP9 → VP8, steps down if the CPU cannot keep up)</option>
+          <option value="AV1">AV1 (sharpest at low bandwidth, uses more CPU)</option>
+          <option value="VP9">VP9 (often hardware-accelerated)</option>
+          <option value="VP8">VP8 (lightest, most compatible)</option>
+          <option value="H264">H264 (hardware, blurs small text)</option>
+        </select>
       </fieldset>
       <fieldset class="settings-group" id="network-settings">
         <legend class="field-label">NETWORK:</legend>
@@ -251,6 +263,7 @@
       </section>
     </div>
     <footer class="modal-footer">
+      <span class="app-version" id="app-version"></span>
       <button class="btn" id="btn-help-close" type="button">CLOSE</button>
     </footer>
   </dialog>

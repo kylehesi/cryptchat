@@ -279,6 +279,27 @@ Each side takes both DTLS fingerprints from the SDP (`a=fingerprint`), sorts the
   | TEXT/CODE | `detail` | 30 | 4 Mbps | maintain-resolution |
   | MOTION/GAMES | `motion` | 60 | 8 Mbps | maintain-framerate |
 
+- **Codec.** The screen transceiver negotiates codecs in the order **AV1 → VP9 → VP8 → H.264**
+  (`setCodecPreferences` on both sides). The encoder is then picked per share with
+  `RTCRtpEncodingParameters.codec`, which switches codecs **without renegotiation**. Settings →
+  VIDEO → SCREEN_CODEC: `AUTO` (default) or a fixed codec. Measured on a 1080p text +
+  60 fps motion test window, sending side i5-13500H / Intel Xe:
+
+  | Codec (encoder) | 1 Mbps, TEXT/CODE | 3 Mbps, TEXT/CODE | 3 Mbps, MOTION |
+  |---|---|---|---|
+  | VP8 (software) | 14 fps, text PSNR 37.0 dB | 29 fps, 41.7 dB | downscaled to 1428 px, 26.2 dB |
+  | VP9 (Intel hardware) | 30 fps, 37.7 dB | 30 fps, 47.5 dB | full res, 44.7 dB |
+  | **AV1** (software, libaom) | **30 fps, 42.9 dB** | **30 fps, 48.8 dB** | **full res, 46.8 dB** |
+  | H.264 (Intel hardware) | 30 fps, 27.8 dB | 29 fps, 43.3 dB | downscaled, 20.8 dB |
+
+  AV1 costs ~13 ms of CPU per 1080p frame here. `contentHint = 'text'` made no measurable
+  difference over `'detail'`.
+- **CPU safety net (AUTO).** Every 2 s the sender reads `qualityLimitationReason`. After about
+  6 s of `cpu`, it steps down to the next negotiated codec (AV1 → VP9 → VP8) and remembers that
+  for the rest of the session. Verified with WebRTC's simulated-overuse field trial.
+- **Live stats** over the feed: `TX AV1 (software) 1904×1012@30 · 0.98 Mbps · LIMIT: BANDWIDTH`
+  on the sender, and `RX … · LOSS x%` on the viewer. A bad picture can then be traced to bandwidth,
+  CPU or packet loss.
 - The peer is told `{ type: 'share', active, audio }` over `control`, which shows or hides the
   feed. A frozen receiver track alone is not a reliable signal.
 - If the shared window closes, the capture track ends and the broadcast stops by itself.

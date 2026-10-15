@@ -115,7 +115,7 @@ function createMainWindow() {
       sandbox: true,
       nodeIntegration: false,
       webSecurity: true,
-      additionalArguments: app.isPackaged ? [] : ['--cc-dev'],
+      additionalArguments: [`--cc-version=${app.getVersion()}`, ...(app.isPackaged ? [] : ['--cc-dev'])],
     },
   });
 

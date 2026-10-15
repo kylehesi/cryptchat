@@ -3,7 +3,7 @@ import { log } from '../core/logger.js';
 /** SHARE_SCR, the source picker dialog, the incoming feed, [FULL] and [ PIP ]. */
 export function mountScreenPanel({ screenShare, connection, els }) {
   const { shareButton, dialog, grid, refreshButton, audioCheck, startButton, cancelButton } = els;
-  const { screen, video, placeholder, badge, fullButton, pipButton } = els;
+  const { screen, video, placeholder, badge, rxStats, fullButton, pipButton, codecSelect } = els;
 
   let sources = [];
   let selectedId = null;
@@ -104,11 +104,34 @@ export function mountScreenPanel({ screenShare, connection, els }) {
     return line;
   }
 
+  let broadcastName = '';
   screenShare.addEventListener('local', ({ detail }) => {
     shareButton.textContent = detail ? 'STOP_SHARE' : 'SHARE_SCR';
     shareButton.classList.toggle('btn-danger', Boolean(detail));
     badge.hidden = !detail;
-    badge.textContent = detail ? `● BROADCASTING > ${detail.name}` : '';
+    broadcastName = detail?.name ?? '';
+    badge.textContent = detail ? `● BROADCASTING > ${broadcastName}` : '';
+  });
+
+  // Live encoder/decoder stats, so a bad picture can be traced to bandwidth or CPU.
+  screenShare.addEventListener('local-stats', ({ detail }) => {
+    if (!screenShare.local) return;
+    const line = detail
+      ? `\nTX ${detail.codec} (${detail.impl}) ${detail.width}×${detail.height}@${detail.fps} · ${formatKbps(detail.kbps)}${detail.limit !== 'none' ? ` · LIMIT: ${detail.limit.toUpperCase()}` : ''}`
+      : '';
+    badge.textContent = `● BROADCASTING > ${broadcastName}${line}`;
+  });
+  screenShare.addEventListener('remote-stats', ({ detail }) => {
+    rxStats.hidden = !detail;
+    if (detail) {
+      rxStats.textContent = `RX ${detail.codec} ${detail.width}×${detail.height}@${detail.fps} · ${formatKbps(detail.kbps)} · LOSS ${detail.lossPct.toFixed(1)}%`;
+    }
+  });
+
+  codecSelect.value = screenShare.codecChoice;
+  codecSelect.addEventListener('change', async () => {
+    await screenShare.setCodecChoice(codecSelect.value);
+    log.info(`Screen codec: ${codecSelect.value.toUpperCase()}${screenShare.local ? ' (applied to the running broadcast)' : ''}.`);
   });
 
   connection.addEventListener('phase', ({ detail }) => {
@@ -146,6 +169,11 @@ export function mountScreenPanel({ screenShare, connection, els }) {
       log.err(`PiP failed: ${error.message}`);
     }
   });
+
+  function formatKbps(kbps) {
+    if (kbps == null) return '...';
+    return kbps >= 1000 ? `${(kbps / 1000).toFixed(2)} Mbps` : `${kbps} kbps`;
+  }
 
   async function toggleFullscreen() {
     if (video.hidden) return;
