@@ -6,6 +6,7 @@ const { app, BrowserWindow, clipboard, ipcMain, Menu, net, protocol, session } =
 const { registerCapture } = require('./capture');
 const { registerSecureStore } = require('./secure-store');
 const { registerCloudflareTurn } = require('./cloudflare-turn');
+const { registerFileReceive } = require('./file-receive');
 
 // The renderer is served from a custom, privileged "app://" scheme instead of file://.
 // This gives the page a real secure origin (needed by getUserMedia & co.), lets ES modules
@@ -147,6 +148,7 @@ app.whenReady().then(() => {
   registerCapture({ isOwnOrigin });
   registerSecureStore({ isOwnOrigin });
   registerCloudflareTurn({ isOwnOrigin });
+  registerFileReceive({ isOwnOrigin });
   createMainWindow();
 });
 

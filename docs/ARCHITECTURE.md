@@ -309,7 +309,43 @@ All messages are JSON with a version and a type:
   Messages are timestamped with the **local receive time**, because the peer's clock is not
   trusted.
 
-## 10. UI
+## 10. File transfer
+
+```
+sender                                   receiver
+  │ control: file-offer {id,name,size} ──▶ │  chat line: ACCEPT / DECLINE
+  │                                        │  ACCEPT → main: create Downloads\CryptChat\<name>.part
+  │ ◀── control: file-accept {id} ──────── │
+  │ opens DataChannel "file:<id>"          │
+  │ ── 64 KB binary chunks ──────────────▶ │  main: append to .part (strictly in order)
+  │ ◀── {type:'ack', bytes} every 1 MB ──  │  (bytes actually written to disk)
+  │ ── {type:'end', bytes} ──────────────▶ │  main: size check → rename → Mark-of-the-Web
+  │ ◀── {type:'done'} ──────────────────── │
+```
+
+- **One DataChannel per transfer** (opened in-band over the existing SCTP link, so no
+  renegotiation). Transfers run in parallel and never block chat or control messages.
+- **No size limit, flat memory.** The sender reads the file as a stream. It pauses while the
+  channel buffer is above 4 MB **or** more than 16 MB are sent but not yet acknowledged as
+  *written* by the receiver. A slow disk on the other side therefore slows the sender instead of
+  filling the receiver's RAM.
+- **Disk is the main process's job** (`src/main/file-receive.js`), over IPC
+  (`cc.files.open/write/close/abort/reveal`). The renderer never gets a file path or `fs` access.
+  - The peer-supplied name is reduced to a safe Windows file name: path parts removed,
+    reserved names (`CON`, `NUL`, …) and forbidden or bidi characters replaced. A transfer can
+    never write outside `Downloads\CryptChat`.
+  - Data is written to `<name>.part`, which is reserved atomically (`wx`). It is renamed only if
+    the byte count is exact. Existing files are never overwritten (`name (1).ext`).
+  - Finished files get `Zone.Identifier` (ZoneId=3), so SmartScreen treats them like any
+    other internet download.
+  - The free disk space is checked before accepting (keeping a 256 MB margin).
+  - On cancel, link loss, window reload/crash or app quit, `.part` files are deleted.
+- **Integrity:** DTLS authenticates and encrypts every chunk, and the channel is reliable and
+  ordered. The exact byte count is checked before the rename. No extra hash is needed.
+- **UI:** transfers are lines in the chat (`[ + ]` button or drag & drop). Programs and scripts
+  get a warning before ACCEPT. Progress shows bar, %, speed and ETA. OPEN_FOLDER on receipt.
+
+## 11. UI
 
 Same 4-panel layout as the original:
 

@@ -84,7 +84,10 @@
           <form id="chat-form" class="chat-form">
             <input id="chat-input" class="input" type="text" maxlength="2000" autocomplete="off"
                    placeholder="> TYPE MESSAGE..." aria-label="Message">
+            <button class="btn btn-icon" id="btn-file" type="button" title="Send file (or drop it on the chat)"
+                    aria-label="Send file">[ + ]</button>
             <button class="btn" id="btn-send" type="submit">SEND</button>
+            <input id="file-input" type="file" multiple hidden>
           </form>
         </div>
       </section>
@@ -232,7 +235,13 @@
            Watching: <kbd>[FULL]</kbd> for fullscreen, <kbd>[ PIP ]</kbd> for a floating window.</p>
       </section>
       <section>
-        <h3>05 // TROUBLESHOOT</h3>
+        <h3>05 // SEND FILES</h3>
+        <p>Press <kbd>[ + ]</kbd> next to SEND, or drop files onto the chat. Your peer must <kbd>ACCEPT</kbd>
+           each file. It is saved to <b>Downloads\CryptChat</b> (<kbd>OPEN_FOLDER</kbd> shows it). No size limit;
+           files go straight to disk over the same encrypted link. Either side can <kbd>CANCEL</kbd>.</p>
+      </section>
+      <section>
+        <h3>06 // TROUBLESHOOT</h3>
         <ul>
           <li><b>"ICE failed":</b> your networks cannot reach each other directly (e.g. mobile/CGNAT).
               One of you needs a TURN relay: <kbd>[ ⚙ ]</kbd> → NETWORK.</li>

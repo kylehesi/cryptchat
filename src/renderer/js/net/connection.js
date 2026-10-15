@@ -7,6 +7,7 @@
 //   'channel-open'   { name }               a DataChannel of the current session opened
 //   'peer-message'   { channel, message }   a protocol message from the peer (except 'bye')
 //   'link-stats'     { route, rttMs, upKbps, downKbps, lossPct }   every 2 s while linked
+//   'datachannel'    { channel }            the peer opened an extra channel (file transfers)
 //
 // Phases:
 //   idle            nothing running
@@ -102,6 +103,11 @@ export class Connection extends EventTarget {
     return this.session?.send(channel, type, fields) ?? false;
   }
 
+  /** Opens an extra DataChannel on the live link, or returns null if there is none. */
+  openChannel(label) {
+    return this.phase === 'connected' || this.phase === 'reconnecting' ? this.session.openChannel(label) : null;
+  }
+
   /** Tears down the session and tells the peer, if it can still hear us. */
   terminate() {
     if (!this.session) return;
@@ -183,6 +189,10 @@ export class Connection extends EventTarget {
         return;
       }
       this.#emit('peer-message', detail);
+    });
+    session.addEventListener('datachannel', ({ detail }) => {
+      if (session === this.session) this.#emit('datachannel', detail);
+      else detail.channel.close();
     });
     session.addEventListener('signal-error', ({ detail }) => {
       if (session === this.session) log.warn(`Renegotiation failed: ${detail.error.message}`);

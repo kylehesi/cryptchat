@@ -8,6 +8,7 @@
 //   'message'       { channel, message }  a decoded protocol message (see protocol.js);
 //                                         in-band 'sdp' / 'ice' signaling is handled here, not emitted
 //   'signal-error'  { error }             in-band renegotiation failed
+//   'datachannel'   { channel }           the peer opened an extra channel (see openChannel)
 //
 // In-band signaling ("perfect negotiation", ARCHITECTURE §5.3): once the control channel is
 // open, every later renegotiation (ICE restart, future media) is exchanged over it. The
@@ -86,6 +87,15 @@ export class PeerSession extends EventTarget {
     this.pc.addEventListener('connectionstatechange', () => {
       this.#emit('state', { state: this.pc.connectionState });
     });
+
+    // Channels the peer opens on the fly (e.g. one per file transfer). Negotiated channels
+    // never show up here.
+    this.pc.addEventListener('datachannel', ({ channel }) => this.#emit('datachannel', { channel }));
+  }
+
+  /** Opens an extra reliable, ordered channel over the existing SCTP link (no renegotiation). */
+  openChannel(label) {
+    return this.pc.createDataChannel(label, { ordered: true });
   }
 
   /** Offerer: returns the complete offer (all ICE candidates included). */

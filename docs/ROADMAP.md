@@ -119,8 +119,22 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] In-app **[ ? ] HOW_TO_USE** guide
 - [x] Cloudflare TURN support (key ID + API token, credentials minted per link)
 - [x] `start.cmd` launcher (no installer yet), README quick start
-- [ ] Push to the private GitHub repo
-- [ ] Two-PC tests from phases 2–7 (**you + a friend**)
+- [x] Push to the private GitHub repo
+- [~] Two-PC tests from phases 2–7 (2026-10-14, both on mobile data):
+  - [x] Direct ICE failed, **connected via Cloudflare TURN** (TURN support was needed in practice)
+  - [x] Same verification code on both sides
+  - [x] Voice clear
+  - [ ] Screen share: worked, but **quality was low** (maybe mobile data). Investigate later
+  - [ ] System audio without echo: not tested yet
+  - [ ] Wi-Fi drop recovery: not tested yet
+
+## Phase 8.6 — File transfer
+- [x] Offer → ACCEPT / DECLINE in the chat, one DataChannel per file, 64 KB chunks
+- [x] Streamed to disk in the main process: no size limit, RAM stays flat (16 MB window)
+- [x] Safe file names, `.part` until the byte count matches, Mark-of-the-Web, free-space check
+- [x] Cancel from either side, cleanup on link loss, warning for programs/scripts
+- [x] `[ + ]` button and drag & drop onto the chat, progress / speed / ETA, OPEN_FOLDER
+- [ ] Two-PC test over TURN (**you + a friend**)
 
 ## Phase 9 — Polish
 - [ ] Final window size (960×600 target), no scroll
@@ -143,7 +157,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - **Group calls (3–4, mesh)**: more `PeerSession`s in the map. Realistically this needs room-code
   signaling first, because copy-pasting with 3 people means 3 separate exchanges, and with 4 it
   means 6.
-- P2P file transfer over a DataChannel
+- Screen-share quality on weak links (codec choice, resolution scaling, stats-driven presets)
 - Camera
 - Linux / macOS builds
 - Localisation

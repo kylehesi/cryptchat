@@ -86,6 +86,11 @@ body {
   min-height: 0;
 }
 
+/* Only the log absorbs a short window; the alias field and the input row keep their height. */
+.chat-body > :not(.chat-log) {
+  flex-shrink: 0;
+}
+
 .chat-log {
   flex: 1 1 auto;
   min-height: 0;

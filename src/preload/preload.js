@@ -25,6 +25,14 @@ contextBridge.exposeInMainWorld('cc', {
     /** Short-lived Cloudflare TURN credentials. @returns {Promise<{ ok: boolean, iceServers?: RTCIceServer[], error?: string }>} */
     cloudflare: (keyId, apiToken) => ipcRenderer.invoke('turn:cloudflare', keyId, apiToken),
   },
+  files: {
+    // Receiving side: the main process owns the disk. All return { ok, error? , ... }.
+    open: (id, name, size) => ipcRenderer.invoke('file:open', id, name, size),
+    write: (id, chunk) => ipcRenderer.invoke('file:write', id, chunk),
+    close: (id) => ipcRenderer.invoke('file:close', id),
+    abort: (id) => ipcRenderer.invoke('file:abort', id),
+    reveal: (id) => ipcRenderer.invoke('file:reveal', id),
+  },
   capture: {
     /** @returns {Promise<{ id: string, name: string, kind: 'screen' | 'window', thumbnail: string | null }[]>} */
     listSources: () => ipcRenderer.invoke('capture:list-sources'),

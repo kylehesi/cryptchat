@@ -472,6 +472,61 @@
   gap: 10px;
 }
 
+/* File transfers (rendered as chat lines) */
+.btn-icon {
+  padding: 0 8px;
+}
+
+.chat-form .btn {
+  height: 26px;
+}
+
+.panel-chat.is-dropping .chat-log {
+  border-color: var(--accent);
+  border-style: dashed;
+}
+
+.transfer {
+  padding: 3px 0;
+}
+
+.transfer-name {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.transfer-size,
+.transfer-meta {
+  color: var(--text-faint);
+}
+
+.transfer-bar {
+  color: var(--accent);
+  letter-spacing: -0.04em;
+}
+
+.transfer-state {
+  color: var(--text-dim);
+}
+
+.transfer-state.is-done {
+  color: var(--accent);
+}
+
+.transfer-state.is-bad {
+  color: var(--danger);
+}
+
+.transfer-warn {
+  color: var(--warn);
+}
+
+.transfer-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+}
+
 /* Verification code */
 .verify-code {
   display: grid;

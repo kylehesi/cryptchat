@@ -1,7 +1,7 @@
 import { log } from '../core/logger.js';
+import { appendToLog } from './scroll-log.js';
 
-const MAX_LINES = 500;
-const STICK_THRESHOLD_PX = 24;
+export const CHAT_MAX_LINES = 500;
 const LOCAL_CARD_NAME = 'LOCAL_USR';
 const REMOTE_CARD_NAME = 'REMOTE_USR';
 
@@ -78,10 +78,7 @@ export function mountChatPanel({ chat, aliasInput, chatLog, form, messageInput, 
   }
 
   function append(line) {
-    const atBottom = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < STICK_THRESHOLD_PX;
-    chatLog.append(line);
-    while (chatLog.childElementCount > MAX_LINES) chatLog.firstElementChild.remove();
-    if (atBottom) chatLog.scrollTop = chatLog.scrollHeight;
+    appendToLog(chatLog, line, CHAT_MAX_LINES);
   }
 
   render(chat.ready);

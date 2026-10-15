@@ -7,6 +7,7 @@ import { VoiceActivity } from './media/voice-activity.js';
 import { Connection } from './net/connection.js';
 import { NetworkSettings } from './net/network-settings.js';
 import { Verification } from './security/verification.js';
+import { FileTransfers } from './transfer/file-transfer.js';
 import { mountAudioSettings } from './ui/audio-settings.js';
 import { mountAvPanel } from './ui/av-panel.js';
 import { mountChatPanel } from './ui/chat-panel.js';
@@ -15,6 +16,7 @@ import { mountLinkStatus } from './ui/link-status.js';
 import { mountLogPanel } from './ui/log-panel.js';
 import { mountNetworkSettings } from './ui/network-settings-panel.js';
 import { mountScreenPanel } from './ui/screen-panel.js';
+import { mountTransferPanel } from './ui/transfer-panel.js';
 import { mountVerifyPanel } from './ui/verify-panel.js';
 import { mountDialog } from './ui/dialog.js';
 
@@ -40,6 +42,8 @@ const microphone = new Microphone();
 const voice = new Voice({ connection, microphone, activity: new VoiceActivity() });
 const screenShare = new ScreenShare({ connection, voice });
 const verification = new Verification(connection);
+const transfers = new FileTransfers(connection);
+const chat = new Chat(connection);
 
 mountConnectionPanel({
   connection,
@@ -65,7 +69,7 @@ mountVerifyPanel({
 });
 
 mountChatPanel({
-  chat: new Chat(connection),
+  chat,
   aliasInput: $('chat-alias'),
   chatLog: $('chat-log'),
   form: $('chat-form'),
@@ -73,6 +77,18 @@ mountChatPanel({
   sendButton: $('btn-send'),
   localName: document.querySelector('#peer-local .peer-name'),
   remoteName: document.querySelector('#peer-remote .peer-name'),
+});
+
+mountTransferPanel({
+  transfers,
+  chat,
+  connection,
+  els: {
+    chatPanel: document.querySelector('.panel-chat'),
+    chatLog: $('chat-log'),
+    fileButton: $('btn-file'),
+    fileInput: $('file-input'),
+  },
 });
 
 mountAvPanel({
@@ -128,7 +144,7 @@ mountScreenPanel({
 window.addEventListener('beforeunload', () => connection.terminate());
 
 // Development only (never in a packaged build): poke at the live objects from DevTools (F12).
-if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification };
+if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification, transfers };
 
 const { electron, chrome } = window.cc.versions;
 log.info('--- SYSTEM BOOT ---');
