@@ -3,6 +3,21 @@
 All notable changes to CryptChat. Versions follow `MAJOR.MINOR.PATCH`: every commit bumps
 PATCH, bigger milestones bump MINOR. Dates are YYYY-MM-DD.
 
+## [0.1.2] - 2026-10-16
+
+### Added
+- **Test suite in the repo:** `npm test` runs unit tests (protocol, sanitizers, SAS, SDP edits,
+  validators) and two-window end-to-end tests (connect, chat, renegotiation, voice,
+  verification, files, settings), plus local-only screen, system-audio and TURN tests.
+  GitHub Actions runs them on every push and pull request.
+- [docs/TODO.md](docs/TODO.md): the ordered backlog.
+
+### Fixed
+- TERMINATE_LINK during a busy transfer: the goodbye message could be dropped, so the peer
+  only noticed after the 30 s "link lost" timeout. The link now closes once `bye` has left.
+- Changing a mic setting right before a call ended could re-open the microphone after the call.
+  Stale captures are now discarded.
+
 ## [0.1.1] - 2026-10-15
 
 ### Changed

@@ -1,7 +1,7 @@
 {
   "name": "cryptchat",
   "productName": "CryptChat",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Peer-to-peer voice, screen sharing, file transfer and chat for Windows. No accounts, no backend.",
   "author": "kylehesi",
   "homepage": "https://github.com/kylehesi/cryptchat",
@@ -19,7 +19,10 @@
     "start": "electron .",
     "start:b": "electron . --profile=b",
     "icons": "electron tools/icon/build-icons.js assets/logo.png",
-    "dist": "electron-builder --win --publish never"
+    "dist": "electron-builder --win --publish never",
+    "test": "node test/run.js",
+    "test:unit": "node test/run.js --unit",
+    "test:e2e": "node test/run.js --e2e"
   },
   "devDependencies": {
     "electron": "^44.7.0",

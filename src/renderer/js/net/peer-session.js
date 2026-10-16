@@ -178,6 +178,22 @@ export class PeerSession extends EventTarget {
     this.pc.close();
   }
 
+  /**
+   * Says 'bye' and closes once the message has actually left the buffer (or after a timeout).
+   * Closing right away would drop it whenever the link is busy, e.g. during a file transfer,
+   * and the peer would only notice through the 30 s "link lost" timeout.
+   */
+  async closeGracefully(timeoutMs = 2000) {
+    this.send('control', 'bye');
+    const control = this.channels.control;
+    const deadline = performance.now() + timeoutMs;
+    while (control.readyState === 'open' && control.bufferedAmount > 0 && performance.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 150)); // let the last packet leave the socket
+    this.close();
+  }
+
   // Called once the control channel opens. The copy-paste bootstrap is complete by then, so
   // negotiationneeded can only mean a real renegotiation (e.g. restartIce()).
   #enableInBandSignaling() {

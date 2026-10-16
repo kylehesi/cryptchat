@@ -101,6 +101,7 @@ export class Voice extends EventTarget {
 
     try {
       const track = await this.microphone.acquire(); // fires 'track', which attaches it to the sender
+      if (!track) return; // the call ended while the mic was opening
       const label = this.microphone.devices.find((device) => device.id === this.microphone.deviceId)?.label;
       log.ok(`Voice channel open. Mic: ${label ?? track.label}`);
     } catch (error) {

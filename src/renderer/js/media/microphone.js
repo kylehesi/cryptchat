@@ -20,6 +20,7 @@ export class Microphone extends EventTarget {
   processing = { ...DEFAULT_PROCESSING };
   /** @type {MediaStreamTrack | null} */
   track = null;
+  #generation = 0; // bumped by release(); captures that finish later are discarded
 
   constructor() {
     super();
@@ -55,11 +56,18 @@ export class Microphone extends EventTarget {
   /** Opens the mic (if not already open) and returns its track. */
   async acquire() {
     if (this.track) return this.track;
-    this.#setTrack(await this.#capture());
+    const generation = this.#generation;
+    const track = await this.#capture();
+    if (generation !== this.#generation) {
+      track.stop(); // released while getUserMedia was pending: never leave the mic open
+      return null;
+    }
+    this.#setTrack(track);
     return this.track;
   }
 
   release() {
+    this.#generation += 1; // any capture still in flight is now stale
     this.track?.stop();
     this.#setTrack(null);
   }
@@ -79,8 +87,13 @@ export class Microphone extends EventTarget {
 
   // Chromium cannot switch device or DSP on a live track reliably, so capture a new one.
   async #recapture() {
+    const generation = this.#generation;
     const old = this.track;
     const next = await this.#capture();
+    if (generation !== this.#generation || this.track !== old) {
+      next.stop(); // the call ended (or another change won) meanwhile
+      return;
+    }
     next.enabled = old?.enabled ?? true;
     this.#setTrack(next);
     old?.stop();

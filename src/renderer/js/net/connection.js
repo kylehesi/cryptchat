@@ -110,9 +110,10 @@ export class Connection extends EventTarget {
 
   /** Tears down the session and tells the peer, if it can still hear us. */
   terminate() {
-    if (!this.session) return;
-    this.session.send('control', 'bye');
-    this.#closeSession();
+    const session = this.session;
+    if (!session) return;
+    this.#closeSession({ keepTransport: true }); // UI and modules go idle at once (file pumps stop)
+    session.closeGracefully(); // then 'bye', and the transport closes once it has left
     log.warn('Link terminated.');
   }
 
@@ -199,9 +200,9 @@ export class Connection extends EventTarget {
     });
   }
 
-  #closeSession() {
+  #closeSession({ keepTransport = false } = {}) {
     this.#stopTimers();
-    this.session?.close();
+    if (!keepTransport) this.session?.close();
     this.session = null;
     this.#routeKey = null;
     this.#lastSnapshot = null;

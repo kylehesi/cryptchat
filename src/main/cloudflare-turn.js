@@ -75,4 +75,4 @@ function registerCloudflareTurn({ isOwnOrigin }) {
   });
 }
 
-module.exports = { registerCloudflareTurn, KEY_ID, API_TOKEN };
+module.exports = { registerCloudflareTurn, KEY_ID, API_TOKEN, sanitize }; // sanitize: exported for unit tests

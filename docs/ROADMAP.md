@@ -145,10 +145,10 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [ ] If bandwidth turns out to be the limit there: faster bitrate ramp-up, resolution presets
 
 ## Phase 9 — Polish
-- [ ] Final window size (960×600 target), no scroll
+- [x] Final window size: 978×563 content area, minimum size enforced, no scroll
 - [ ] Error messages for every failure path (no mic, permission denied, bad payload, ICE failed)
 - [ ] Keyboard shortcuts (e.g. mic toggle)
-- [ ] README: screenshots, honest security section, usage guide
+- [ ] README: screenshots (honest security section and usage guide are done)
 
 ## Phase 10 — Release
 - [x] electron-builder NSIS installer (`npm run dist`): per-user, no UAC prompt, license page,
@@ -162,21 +162,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ---
 
-## Later (v2+)
+# TO DO
 
-- **Room-code signaling** (no copy-paste): exchange the offer/answer through public relays we
-  don't run (e.g. Nostr), encrypted with a key derived from a short room code.
-  Plugs into the signaling interface from ARCHITECTURE §5.3.
-- **Group calls (3–4, mesh)**: more `PeerSession`s in the map. Realistically this needs room-code
-  signaling first, because copy-pasting with 3 people means 3 separate exchanges, and with 4 it
-  means 6.
-- Camera
-- Linux / macOS builds
-- Localisation
-
-## Open decisions (to discuss)
-
-1. **Signaling for v1:** manual copy-paste only (recommended, zero dependencies, easiest to debug)
-   vs. adding room codes in v1.
-2. **Groups:** recommended plan is that the v1 architecture supports them, v1 UI ships 1:1,
-   and groups arrive together with room-code signaling.
+The ordered backlog (open items, ideas, pending tests, decisions) lives in **[TODO.md](TODO.md)**.
+This file keeps the history of the finished phases.

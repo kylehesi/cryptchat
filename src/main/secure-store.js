@@ -110,4 +110,4 @@ function registerSecureStore({ isOwnOrigin }) {
   });
 }
 
-module.exports = { registerSecureStore };
+module.exports = { registerSecureStore, validate }; // validate: exported for unit tests

@@ -150,7 +150,9 @@ crash, and **no dummy black canvas track**. Stopping is `replaceTrack(null)`.
    public `srflx` candidate.
    The UI state machine lives in `net/connection.js`: `idle → gathering → awaiting-answer |
    awaiting-peer → connecting → connected | failed`. TERMINATE_LINK sends `bye` on the control
-   channel, so the other side drops immediately instead of waiting for an ICE timeout.
+   channel, so the other side drops immediately instead of waiting for an ICE timeout. The app
+   goes idle at once, but the transport is only closed after `bye` has left the send buffer
+   (max 2 s). Otherwise a busy link (a file transfer) would drop it.
 2. **After connect:** any further negotiation (ICE restart after a network change, codec changes,
    future camera) uses the **"perfect negotiation" pattern over the `control` channel**. The
    user never copies anything again for that session. The answerer is the *polite* peer: on an
