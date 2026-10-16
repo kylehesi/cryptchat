@@ -133,21 +133,42 @@ body {
   border: 1px solid var(--border);
 }
 
-.mic-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* MIC_SRC | AUDIO_OUT on one line, so the screen area below keeps its height. */
+.device-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
-.mic-row .select {
+.device-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.device-field .select {
   flex: 1 1 auto;
   min-width: 0;
+  text-overflow: ellipsis; /* long Windows device names; the full name is in the tooltip */
 }
 
 .btn-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
+}
+
+.share-cell {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.share-cell .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 6px;
 }
 
 .screen {

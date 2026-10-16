@@ -1,13 +1,17 @@
 // Central log. Modules write here; the KERNEL_LOG panel (ui/log-panel.js) renders it.
 // This file never touches the DOM.
+//
+// Entries: { level: 'info' | 'ok' | 'warn' | 'err', message, time, notify }
+// `notify` (default true) lets warnings/errors raise a notification. Pass { notify: false } for
+// messages that only confirm something the user just did ("Link terminated.").
 
 const MAX_HISTORY = 500;
 
 const target = new EventTarget();
 const history = [];
 
-function write(level, message) {
-  const entry = { level, message: String(message), time: new Date() };
+function write(level, message, { notify = true } = {}) {
+  const entry = { level, message: String(message), time: new Date(), notify };
 
   history.push(entry);
   if (history.length > MAX_HISTORY) history.shift();
@@ -19,10 +23,10 @@ function write(level, message) {
 }
 
 export const log = {
-  info: (message) => write('info', message),
-  ok: (message) => write('ok', message),
-  warn: (message) => write('warn', message),
-  err: (message) => write('err', message),
+  info: (message, options) => write('info', message, options),
+  ok: (message, options) => write('ok', message, options),
+  warn: (message, options) => write('warn', message, options),
+  err: (message, options) => write('err', message, options),
 
   /** Replays existing history to `fn`, then calls it for every new entry. Returns an unsubscribe function. */
   subscribe(fn) {

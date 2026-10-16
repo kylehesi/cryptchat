@@ -9,7 +9,7 @@ Peer-to-peer voice, screen sharing, file transfer and chat for Windows. No accou
 backend, no middleman.
 
 > **Status:** pre-release. Works end to end; being tested between real PCs.
-> What changed: [CHANGELOG.md](CHANGELOG.md) · What is next: [docs/ROADMAP.md](docs/ROADMAP.md).
+> 📋 **[Release notes](CHANGELOG.md)**: what is new in each version · What is next: [docs/TODO.md](docs/TODO.md).
 
 ## Install
 

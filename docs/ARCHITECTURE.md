@@ -264,6 +264,12 @@ Each side takes both DTLS fingerprints from the SDP (`a=fingerprint`), sorts the
 
 - One `<audio>` element per remote audio track. Deafen = mute all remote playback **and** mute
   your own mic (Discord semantics). The state is sent to the peer over `control`.
+- **Output device** (`media/speakers.js`): every playback element registers with `Speakers`,
+  which applies the AUDIO_OUT choice via `setSinkId()` (now and on every change). It falls
+  back to `default` when the device disappears.
+- **Volumes** (`media/volume.js`): the peer's voice and their system audio each have their own
+  0–100% level on the media element, remembered per PC. There is no boost above 100%: that would
+  need Web Audio playback, which weakens Chromium's echo cancellation for speaker users.
 - Speaking indicator: `AnalyserNode` RMS with a threshold, used for both local and remote cards.
 
 ## 8. Screen share
@@ -305,6 +311,10 @@ Each side takes both DTLS fingerprints from the SDP (`a=fingerprint`), sorts the
 - The peer is told `{ type: 'share', active, audio }` over `control`, which shows or hides the
   feed. A frozen receiver track alone is not a reliable signal.
 - If the shared window closes, the capture track ends and the broadcast stops by itself.
+- **Switching source** (SWITCH) calls the same `start()` on a running broadcast. The new capture
+  is put on the senders with `replaceTrack()` **before** the old one is stopped, so the sender
+  never holds an ended track and the viewer sees a cut, not a stop. The `share` state is resent,
+  so turning audio off during a switch hides the viewer's SYS_VOL.
 - `[FULL]` → Fullscreen API on the screen box (double-clicking the video does the same).
 - `[ PIP ]` → native `video.requestPictureInPicture()`. It works in Electron and floats
   always-on-top, so no custom window is needed.
@@ -368,7 +378,32 @@ sender                                   receiver
 - **UI:** transfers are lines in the chat (`[ + ]` button or drag & drop). Programs and scripts
   get a warning before ACCEPT. Progress shows bar, %, speed and ETA. OPEN_FOLDER on receipt.
 
-## 11. UI
+## 11. Notifications
+
+- **Sounds** (`media/sounds.js`): synthesized with Web Audio, so there are no sound files. One
+  `AudioContext`, routed to AUDIO_OUT through `Speakers` (`AudioContext.setSinkId`).
+
+  | Sound | Character | Played for |
+  |---|---|---|
+  | `message` | soft two-note triangle chime + echo | chat message, incoming file, file received |
+  | `console` | square-wave arpeggio through a bit-crusher | warn/err log lines, link up / restored |
+  | `disconnect` | falling detuned saw, closing filter, gated stutter | peer terminated, link lost, ICE/DTLS failed |
+  | `ui` | noise tick; `on`/`off` add a rising/falling blip | every button; mic/deafen; screen share on/off |
+
+  Event sounds requested within 150 ms are merged, and the highest priority wins
+  (disconnect > console > message). So "peer terminated" plays one alarm, not alarm + system
+  sound. `renderSound()` renders offline for tests (audible, no clipping, short) and for previews.
+- **Attention** (`ui/attention.js`): `mark(elements, { tone })` adds `is-unseen` + a tone class
+  (accent / warn / danger). While the window is unfocused the glow stays. Once focused, it fades
+  after 3 s. If the window is in the background, the taskbar button flashes until focus
+  (`window:flash` IPC → `BrowserWindow.flashFrame`).
+- **Wiring** (`ui/notifications.js`) listens to existing events only (chat, transfers,
+  connection `ended` / `phase`, log entries, voice and screen-share state). Log entries carry
+  `notify` (default true). Messages that only confirm the user's own action pass
+  `{ notify: false }`, and `ended` has a `reason`, so our own TERMINATE_LINK (`local`) never
+  raises an alarm.
+
+## 12. UI
 
 Same 4-panel layout as the original:
 

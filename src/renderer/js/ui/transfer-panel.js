@@ -54,6 +54,7 @@ export function mountTransferPanel({ transfers, chat, connection, els }) {
     if (!line) {
       line = document.createElement('div');
       line.className = 'chat-line transfer';
+      line.dataset.transferId = transfer.id; // lets notifications highlight this exact line
       lines.set(transfer.id, line);
       render(line, transfer);
       appendToLog(chatLog, line, CHAT_MAX_LINES);

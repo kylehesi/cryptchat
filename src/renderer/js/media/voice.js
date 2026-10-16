@@ -10,12 +10,17 @@
 //   'speaking'      { who: 'local' | 'remote', speaking }
 
 import { log } from '../core/logger.js';
+import { clampVolume, loadVolume, saveVolume } from './volume.js';
+
+const VOLUME_KEY = 'cc.volume.voice';
 
 export class Voice extends EventTarget {
   micMuted = false;
   deafened = false;
   /** @type {{ micOn: boolean, deafened: boolean } | null} */
   remoteState = null;
+  /** The peer's voice volume, 0–1 (independent of DEAFEN). Remembered on this PC. */
+  volume = loadVolume(VOLUME_KEY);
 
   #session = null;
   #mutedBeforeDeafen = false;
@@ -26,14 +31,17 @@ export class Voice extends EventTarget {
   /**
    * @param {{ connection: import('../net/connection.js').Connection,
    *           microphone: import('./microphone.js').Microphone,
-   *           activity: import('./voice-activity.js').VoiceActivity }} deps
+   *           activity: import('./voice-activity.js').VoiceActivity,
+   *           speakers: import('./speakers.js').Speakers }} deps
    */
-  constructor({ connection, microphone, activity }) {
+  constructor({ connection, microphone, activity, speakers }) {
     super();
     this.connection = connection;
     this.microphone = microphone;
     this.activity = activity;
     this.#playback.autoplay = true;
+    this.#playback.volume = this.volume;
+    speakers.attach(this.#playback); // the peer's voice plays on the chosen AUDIO_OUT
 
     connection.addEventListener('phase', ({ detail }) => {
       if (detail.phase === 'connected' && connection.session !== this.#session) this.#startCall(connection.session);
@@ -62,6 +70,12 @@ export class Voice extends EventTarget {
 
   get micOn() {
     return !this.micMuted && !this.deafened;
+  }
+
+  setVolume(volume) {
+    this.volume = clampVolume(volume);
+    this.#playback.volume = this.volume;
+    saveVolume(VOLUME_KEY, this.volume);
   }
 
   toggleMic() {

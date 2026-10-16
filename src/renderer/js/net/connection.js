@@ -6,6 +6,8 @@
 //   'local-payload'  { payload, type }      a payload is ready to be sent to the peer
 //   'channel-open'   { name }               a DataChannel of the current session opened
 //   'peer-message'   { channel, message }   a protocol message from the peer (except 'bye')
+//   'ended'          { reason }             a link (or attempt) ended: 'local' (we terminated),
+//                                           'peer' (bye), 'lost' (timeout), 'failed' (ICE/DTLS), 'error'
 //   'link-stats'     { route, rttMs, upKbps, downKbps, lossPct }   every 2 s while linked
 //   'datachannel'    { channel }            the peer opened an extra channel (file transfers)
 //
@@ -114,7 +116,8 @@ export class Connection extends EventTarget {
     if (!session) return;
     this.#closeSession({ keepTransport: true }); // UI and modules go idle at once (file pumps stop)
     session.closeGracefully(); // then 'bye', and the transport closes once it has left
-    log.warn('Link terminated.');
+    log.warn('Link terminated.', { notify: false }); // our own action: no alarm
+    this.#emit('ended', { reason: 'local' });
   }
 
   async #answer(offer) {
@@ -186,6 +189,7 @@ export class Connection extends EventTarget {
       if (session !== this.session) return;
       if (detail.channel === 'control' && detail.message.type === 'bye') {
         log.warn('Remote peer terminated the link.');
+        this.#emit('ended', { reason: 'peer' });
         this.#closeSession();
         return;
       }
@@ -234,6 +238,7 @@ export class Connection extends EventTarget {
 
     this.#lostTimer = setTimeout(() => {
       log.err(`Link lost: peer unreachable for ${LINK_LOST_TIMEOUT_MS / 1000} s. Generate a new payload to reconnect.`);
+      this.#emit('ended', { reason: 'lost' });
       this.#closeSession();
     }, LINK_LOST_TIMEOUT_MS);
   }
@@ -293,6 +298,7 @@ export class Connection extends EventTarget {
           session.restartIce();
         } else {
           this.#setPhase('failed');
+          this.#emit('ended', { reason: 'failed' });
           if (session.pc.sctp?.transport.state === 'failed') {
             // The network path worked, but the certificates did not match the payloads.
             log.err('SECURE HANDSHAKE (DTLS) FAILED: the payloads do not belong together or were altered in transit. Possible tampering. TERMINATE_LINK and exchange new payloads over a channel you trust.');

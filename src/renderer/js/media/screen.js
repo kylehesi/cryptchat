@@ -7,13 +7,16 @@
 // is CPU-bound for a few seconds, it steps down AV1 → VP9 → VP8 on the fly.
 //
 // Events (CustomEvent.detail):
-//   'local'         { name, withAudio, preset } | null     what we are broadcasting
+//   'local'         { sourceId, name, withAudio, preset } | null   what we are broadcasting
 //   'remote'        { active, audio, videoTrack }          what the peer is broadcasting
 //   'local-stats'   { codec, impl, width, height, fps, kbps, limit } | null
 //   'remote-stats'  { codec, width, height, fps, kbps, lossPct } | null
 
 import { log } from '../core/logger.js';
 import { SCREEN_CODEC_ORDER } from '../net/peer-session.js';
+import { clampVolume, loadVolume, saveVolume } from './volume.js';
+
+const VOLUME_KEY = 'cc.volume.system';
 
 export const PRESETS = {
   detail: { label: 'TEXT/CODE', fps: 30, maxBitrate: 4_000_000, degradation: 'maintain-resolution', hint: 'detail' },
@@ -29,10 +32,12 @@ const CPU_STRIKES_TO_FALL_BACK = 3; // 3 × 2 s of "cpu" limitation
 const STORAGE_KEY = 'cc.video';
 
 export class ScreenShare extends EventTarget {
-  /** @type {{ name: string, withAudio: boolean, preset: string } | null} */
+  /** @type {{ sourceId: string, name: string, withAudio: boolean, preset: string } | null} */
   local = null;
   remote = { active: false, audio: false, videoTrack: null };
   codecChoice = loadCodecChoice();
+  /** Volume of the peer's shared system audio, 0–1. Remembered on this PC. */
+  audioVolume = loadVolume(VOLUME_KEY);
 
   #session = null;
   #tracks = [];
@@ -46,12 +51,15 @@ export class ScreenShare extends EventTarget {
 
   /**
    * @param {{ connection: import('../net/connection.js').Connection,
-   *           voice: import('./voice.js').Voice }} deps
+   *           voice: import('./voice.js').Voice,
+   *           speakers: import('./speakers.js').Speakers }} deps
    */
-  constructor({ connection, voice }) {
+  constructor({ connection, voice, speakers }) {
     super();
     this.connection = connection;
     this.#remoteAudio.autoplay = true;
+    this.#remoteAudio.volume = this.audioVolume;
+    speakers.attach(this.#remoteAudio); // the peer's system audio follows AUDIO_OUT too
 
     connection.addEventListener('phase', ({ detail }) => {
       if (detail.phase === 'connected' && connection.session !== this.#session) this.#attach(connection.session);
@@ -79,10 +87,15 @@ export class ScreenShare extends EventTarget {
     return window.cc.capture.listSources();
   }
 
-  /** Starts (or switches) the broadcast. Throws with a user-facing message on failure. */
+  /**
+   * Starts the broadcast, or switches a running one to another source / audio / preset without
+   * stopping it: the viewer's feed changes in place. Throws with a user-facing message on failure
+   * (a running broadcast then keeps going unchanged).
+   */
   async start({ source, withAudio, preset }) {
     if (!this.#session) throw new Error('No active link.');
     const settings = PRESETS[preset] ?? PRESETS.detail;
+    const switching = Boolean(this.local);
 
     if (!(await window.cc.capture.select(source.id, withAudio))) {
       throw new Error('Source is no longer available. Refresh the list.');
@@ -105,15 +118,18 @@ export class ScreenShare extends EventTarget {
     const audio = stream.getAudioTracks()[0] ?? null;
     video.contentHint = settings.hint;
 
-    this.#stopTracks(); // switching sources: drop the previous capture
+    // New capture first, old one after: the sender is never left with an ended track, so a
+    // switch shows up on the viewer as a cut to the new source, not as "broadcast stopped".
+    const previous = this.#tracks;
     this.#tracks = [video, audio].filter(Boolean);
 
     const { screen, screenAudio } = this.#session.slots;
     await screen.sender.replaceTrack(video);
+    await screenAudio.sender.replaceTrack(audio);
+    for (const track of previous) track.stop();
     this.#cpuStrikes = 0;
     this.#loggedEncoder = null;
     await this.#configureVideoSender(settings);
-    await screenAudio.sender.replaceTrack(audio);
     if (audio) await tune(screenAudio.sender, { maxBitrate: SYSTEM_AUDIO_BITRATE });
 
     // The user closed the shared window, or Windows revoked the capture.
@@ -124,10 +140,10 @@ export class ScreenShare extends EventTarget {
       }
     });
 
-    this.local = { name: source.name, withAudio: Boolean(audio), preset };
+    this.local = { sourceId: source.id, name: source.name, withAudio: Boolean(audio), preset };
     this.#emit('local', this.local);
     this.#sendState();
-    log.ok(`Broadcasting: ${source.name} [${settings.label}]${audio ? ' + system audio' : ''}`);
+    log.ok(`${switching ? 'Switched to' : 'Broadcasting'}: ${source.name} [${settings.label}]${audio ? ' + system audio' : ''}`);
   }
 
   async stop({ quiet = false } = {}) {
@@ -143,6 +159,12 @@ export class ScreenShare extends EventTarget {
     this.#emit('local-stats', null);
     this.#sendState();
     if (!quiet) log.info('Broadcast stopped.');
+  }
+
+  setAudioVolume(volume) {
+    this.audioVolume = clampVolume(volume);
+    this.#remoteAudio.volume = this.audioVolume;
+    saveVolume(VOLUME_KEY, this.audioVolume);
   }
 
   /** 'auto' or a codec name. Applies immediately if a broadcast is running. */

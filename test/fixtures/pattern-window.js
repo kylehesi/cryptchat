@@ -1,9 +1,14 @@
 // A harmless window for screen-share tests, so they never capture the real desktop.
 // Left half: dense static code text. Right half: 60 fps motion. Window title: CC_TEST_PATTERN.
-// Run as its own Electron process: electron test/fixtures/pattern-window.js
+// Run as its own Electron process: electron test/fixtures/pattern-window.js [--title=NAME] [--x=N]
 const { app, BrowserWindow } = require('electron');
 
-const html = `<!doctype html><title>CC_TEST_PATTERN</title>
+const arg = (name, fallback) => process.argv.find((a) => a.startsWith(`--${name}=`))?.split('=')[1] ?? fallback;
+const TITLE = arg('title', 'CC_TEST_PATTERN').replace(/[^A-Z0-9_]/gi, '');
+// Several pattern windows may run at once: give each its own throwaway profile.
+app.setPath('userData', require('node:path').join(require('node:os').tmpdir(), `cryptchat-pattern-${TITLE}`));
+
+const html = `<!doctype html><title>${TITLE}</title>
 <style>
   html, body { margin: 0; height: 100%; background: #0d1117; overflow: hidden; }
   #code { position: absolute; inset: 0 50% 0 0; padding: 10px; font: 12px/15px Consolas, monospace;
@@ -44,7 +49,7 @@ const html = `<!doctype html><title>CC_TEST_PATTERN</title>
 
 app.whenReady().then(() => {
   const win = new BrowserWindow({
-    width: 1280, height: 720, useContentSize: true, x: 20, y: 20, backgroundColor: '#0d1117',
+    width: 1280, height: 720, useContentSize: true, x: Number(arg('x', 20)), y: 20, backgroundColor: '#0d1117',
     autoHideMenuBar: true, webPreferences: { backgroundThrottling: false },
   });
   win.loadURL('data:text/html,' + encodeURIComponent(html));

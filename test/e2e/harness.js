@@ -50,6 +50,14 @@ function e2e(name, body, { timeoutMs = 180000, switches = [], showWindows = fals
       // things like the speaking indicator. B has throttling disabled instead.
       await b.loadURL('app://cryptchat/index.html');
 
+      // Diagnostics: if a window crashes or closes mid-test, say so (otherwise it is just
+      // "Object has been destroyed" with no clue).
+      for (const [label, win] of [['A', first], ['B', b]]) {
+        win.webContents.on('render-process-gone', (e, details) => console.log(`EVENT ${label} renderer gone: ${details.reason} (exit ${details.exitCode})`));
+        win.on('closed', () => console.log(`EVENT ${label} window closed`));
+        win.webContents.on('unresponsive', () => console.log(`EVENT ${label} unresponsive`));
+      }
+
       const t = makeContext(first, b, tmp);
       const started = Date.now();
       let exitCode = 0;
@@ -67,7 +75,11 @@ function e2e(name, body, { timeoutMs = 180000, switches = [], showWindows = fals
         console.log(`FAIL ${name}: ${error.message}`);
         if (error.stack) console.log(error.stack.split('\n').slice(1, 4).join('\n'));
         for (const [label, win] of [['A', t.a], ['B', t.b]]) {
-          console.log(`---- KERNEL_LOG ${label} (tail) ----\n${(await t.logLines(win).catch(() => [])).slice(-8).join('\n')}`);
+          // A destroyed or crashed window never answers executeJavaScript: do not wait on it.
+          const lines = win.isDestroyed() || win.webContents.isCrashed()
+            ? [`(window ${win.isDestroyed() ? 'destroyed' : 'crashed'})`]
+            : await Promise.race([t.logLines(win).catch(() => []), sleep(3000).then(() => ['(no answer)'])]);
+          console.log(`---- KERNEL_LOG ${label} (tail) ----\n${lines.slice(-8).join('\n')}`);
         }
       }
       clearTimeout(timer);

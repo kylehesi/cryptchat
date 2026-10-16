@@ -88,6 +88,23 @@ function registerIpc() {
     clipboard.writeText(text);
     return true;
   });
+
+  // Notifications: flash the taskbar button while the window is in the background.
+  const flashing = new WeakSet();
+  ipcMain.handle('window:flash', (event) => {
+    if (!isOwnOrigin(event.senderFrame?.url)) return false;
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win || win.isDestroyed() || win.isFocused()) return false;
+    win.flashFrame(true);
+    if (!flashing.has(win)) {
+      flashing.add(win);
+      win.once('focus', () => {
+        flashing.delete(win);
+        win.flashFrame(false);
+      });
+    }
+    return true;
+  });
 }
 
 // Applies to every webContents we ever create: no navigation away, no new windows.

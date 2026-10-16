@@ -27,6 +27,10 @@ contextBridge.exposeInMainWorld('cc', {
     /** Short-lived Cloudflare TURN credentials. @returns {Promise<{ ok: boolean, iceServers?: RTCIceServer[], error?: string }>} */
     cloudflare: (keyId, apiToken) => ipcRenderer.invoke('turn:cloudflare', keyId, apiToken),
   },
+  window: {
+    /** Flashes the taskbar button until the window is focused (no-op if it already is). */
+    flash: () => ipcRenderer.invoke('window:flash'),
+  },
   files: {
     // Receiving side: the main process owns the disk. All return { ok, error? , ... }.
     open: (id, name, size) => ipcRenderer.invoke('file:open', id, name, size),

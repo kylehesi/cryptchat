@@ -1,6 +1,8 @@
 import { Chat } from './chat/chat.js';
 import { log } from './core/logger.js';
 import { Microphone } from './media/microphone.js';
+import { SoundBoard } from './media/sounds.js';
+import { Speakers } from './media/speakers.js';
 import { ScreenShare } from './media/screen.js';
 import { Voice } from './media/voice.js';
 import { VoiceActivity } from './media/voice-activity.js';
@@ -17,6 +19,8 @@ import { mountLogPanel } from './ui/log-panel.js';
 import { mountNetworkSettings } from './ui/network-settings-panel.js';
 import { mountScreenPanel } from './ui/screen-panel.js';
 import { mountTransferPanel } from './ui/transfer-panel.js';
+import { Attention } from './ui/attention.js';
+import { mountNotifications } from './ui/notifications.js';
 import { mountVerifyPanel } from './ui/verify-panel.js';
 import { mountDialog } from './ui/dialog.js';
 
@@ -39,8 +43,11 @@ mountDialog({
 const networkSettings = new NetworkSettings();
 const connection = new Connection(networkSettings);
 const microphone = new Microphone();
-const voice = new Voice({ connection, microphone, activity: new VoiceActivity() });
-const screenShare = new ScreenShare({ connection, voice });
+const speakers = new Speakers();
+const sounds = new SoundBoard(speakers);
+const attention = new Attention();
+const voice = new Voice({ connection, microphone, speakers, activity: new VoiceActivity() });
+const screenShare = new ScreenShare({ connection, voice, speakers });
 const verification = new Verification(connection);
 const transfers = new FileTransfers(connection);
 const chat = new Chat(connection);
@@ -94,7 +101,11 @@ mountTransferPanel({
 mountAvPanel({
   voice,
   microphone,
+  speakers,
   micSelect: $('mic-src'),
+  outSelect: $('audio-out'),
+  voiceVolume: $('vol-voice'),
+  connection,
   micButton: $('btn-mic'),
   deafenButton: $('btn-deafen'),
   localCard: $('peer-local'),
@@ -125,6 +136,7 @@ mountScreenPanel({
   connection,
   els: {
     shareButton: $('btn-share'),
+    switchButton: $('btn-switch'),
     dialog: $('source-dialog'),
     grid: $('source-grid'),
     refreshButton: $('btn-source-refresh'),
@@ -137,8 +149,33 @@ mountScreenPanel({
     badge: $('screen-badge'),
     rxStats: $('screen-rx'),
     codecSelect: $('video-codec'),
+    systemVolumeBox: $('screen-volume'),
+    systemVolume: $('vol-system'),
+    systemVolumeValue: $('vol-system-value'),
     fullButton: $('btn-fullscreen'),
     pipButton: $('btn-pip'),
+  },
+});
+
+// Mounted last: it highlights lines the panels above have just appended.
+mountNotifications({
+  sounds,
+  attention,
+  connection,
+  chat,
+  transfers,
+  voice,
+  screenShare,
+  els: {
+    chatPanel: document.querySelector('.panel-chat'),
+    chatLog: $('chat-log'),
+    logPanel: document.querySelector('.panel-log'),
+    logList: $('kernel-log'),
+    remoteCard: $('peer-remote'),
+    linkStatus: $('link-status'),
+    settings: $('notify-settings'),
+    volumeInput: $('fx-volume'),
+    volumeValue: $('fx-volume-value'),
   },
 });
 
@@ -146,7 +183,7 @@ mountScreenPanel({
 window.addEventListener('beforeunload', () => connection.terminate());
 
 // Development only (never in a packaged build): poke at the live objects from DevTools (F12).
-if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification, transfers };
+if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification, transfers, speakers, sounds, attention };
 
 const { electron, chrome } = window.cc.versions;
 log.info(`--- SYSTEM BOOT --- CryptChat v${window.cc.version}`);
@@ -166,5 +203,6 @@ networkSettings
 
 microphone
   .init()
-  .then(() => log.info(`Audio subsystem: ${microphone.devices.length} input device(s) found.`))
+  .then(() => speakers.refreshDevices()) // output names also need the permission the mic probe grants
+  .then(() => log.info(`Audio subsystem: ${microphone.devices.length} input / ${speakers.devices.length} output device(s) found.`))
   .catch((error) => log.err(`Microphone access failed (${error.name}). Voice will be listen-only.`));

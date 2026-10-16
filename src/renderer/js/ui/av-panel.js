@@ -1,14 +1,21 @@
-// A.V._INTERFACE: mic selector, TOGGLE_MIC / DEAFEN, peer card icons and speaking glow.
+// A.V._INTERFACE: MIC_SRC / AUDIO_OUT selectors, TOGGLE_MIC / DEAFEN, peer card icons, speaking glow.
 
-export function mountAvPanel({ voice, microphone, micSelect, micButton, deafenButton, localCard, remoteCard }) {
+export function mountAvPanel({ voice, microphone, speakers, connection, micSelect, outSelect, voiceVolume, micButton, deafenButton, localCard, remoteCard }) {
+  // Peer voice volume, on the remote card (one card per peer later, one slider each).
+  bindVolume(voiceVolume, voice.volume, 'VOICE_VOL', (value) => voice.setVolume(value));
+  connection.addEventListener('phase', ({ detail }) => {
+    voiceVolume.disabled = detail.phase !== 'connected' && detail.phase !== 'reconnecting';
+  });
+
   micButton.addEventListener('click', () => voice.toggleMic());
   deafenButton.addEventListener('click', () => voice.toggleDeafen());
   micSelect.addEventListener('change', () => microphone.setDevice(micSelect.value));
+  outSelect.addEventListener('change', () => speakers.setDevice(outSelect.value));
 
-  microphone.addEventListener('devices', renderDevices);
-  microphone.addEventListener('device', () => {
-    micSelect.value = microphone.deviceId;
-  });
+  microphone.addEventListener('devices', () => fillSelect(micSelect, microphone.devices, microphone.deviceId));
+  microphone.addEventListener('device', () => selectValue(micSelect, microphone.deviceId));
+  speakers.addEventListener('devices', () => fillSelect(outSelect, speakers.devices, speakers.deviceId));
+  speakers.addEventListener('device', () => selectValue(outSelect, speakers.deviceId));
 
   voice.addEventListener('local-state', ({ detail }) => {
     micButton.classList.toggle('is-off', !detail.micOn);
@@ -23,26 +30,51 @@ export function mountAvPanel({ voice, microphone, micSelect, micButton, deafenBu
     card.classList.toggle('is-speaking', detail.speaking);
   });
 
-  function renderDevices() {
-    micSelect.replaceChildren(
-      ...microphone.devices.map((device) => {
-        const option = document.createElement('option');
-        option.value = device.id;
-        option.textContent = device.label;
-        return option;
-      }),
-    );
-    if (!microphone.devices.length) {
-      const option = document.createElement('option');
-      option.textContent = '[ NO DEVICES ]';
-      micSelect.append(option);
-    }
-    micSelect.disabled = !microphone.devices.length;
-    micSelect.value = microphone.deviceId;
-  }
-
   renderCard(localCard, { micOn: voice.micOn, deafened: voice.deafened });
   renderCard(remoteCard, null);
+}
+
+/**
+ * Wires a 0–100 range input to a 0–1 volume setter. Shows the value in the fill, the tooltip,
+ * and an optional <output>.
+ */
+export function bindVolume(input, initial, label, setVolume, output = null) {
+  const show = (percent) => {
+    input.value = String(percent);
+    input.style.setProperty('--fill', `${percent}%`);
+    input.title = `${label} ${percent}%`;
+    if (output) output.textContent = `${percent}%`;
+  };
+  show(Math.round(initial * 100));
+  input.addEventListener('input', () => {
+    const percent = Number(input.value);
+    show(percent);
+    setVolume(percent / 100);
+  });
+}
+
+function fillSelect(select, devices, selectedId) {
+  select.replaceChildren(
+    ...devices.map((device) => {
+      const option = document.createElement('option');
+      option.value = device.id;
+      option.textContent = device.label;
+      return option;
+    }),
+  );
+  if (!devices.length) {
+    const option = document.createElement('option');
+    option.textContent = '[ NO DEVICES ]';
+    select.append(option);
+  }
+  select.disabled = !devices.length;
+  selectValue(select, selectedId);
+}
+
+/** Selects `value` and mirrors the full device name into the tooltip (the box truncates it). */
+function selectValue(select, value) {
+  select.value = value;
+  select.title = select.selectedOptions[0]?.textContent ?? '';
 }
 
 /** state = { micOn, deafened } or null (unknown / no peer: neutral icons). */

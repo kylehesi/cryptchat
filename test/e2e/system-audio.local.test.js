@@ -65,7 +65,9 @@ e2e('system audio (local)', async (t) => {
     player = await play();
     const fixed = await t.js(a, measure(true));
     await done(player);
-    t.ok(fixed.own < -90, `with restrictOwnAudio our own tone is gone (${fixed.own} dB)`);
+    // Relative check: other sounds playing on this PC can leak a little into the 1 kHz bin, so
+    // demand a big drop versus the control run rather than an absolute silence level.
+    t.ok(fixed.own < plain.own - 25 && fixed.own < -70, `with restrictOwnAudio our own tone is gone (${plain.own} → ${fixed.own} dB)`);
     t.ok(fixed.other > -70, `another app's tone is still captured (${fixed.other} dB)`);
   } finally {
     pattern.kill();

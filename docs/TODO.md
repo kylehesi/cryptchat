@@ -18,6 +18,9 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done
       files, settings, screen, system audio, TURN) and unit tests under `test/`, `npm test`, and
       a CI workflow that runs them on every push. They already caught two real bugs (lost `bye`
       on a busy link, mic re-opened after a call)
+- [ ] **Watch:** `files.test.js` failed once (2026-10-16) with "Object has been destroyed" in a
+      full run, then passed in 3 full rounds + 5 single runs. The harness now logs renderer
+      crashes, window closes and hangs, so the next occurrence shows the cause
 - [ ] **Dependabot** for npm and GitHub Actions. Electron ships security fixes every few weeks,
       and an outdated Electron is the app's biggest risk
 - [ ] **Single-instance lock.** A second launch with the same profile focuses the first window
@@ -27,12 +30,14 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done
 
 ## 2. Small gaps (forgotten in v0.1)
 
-- [ ] **Output device selection** (speakers / headset, `setSinkId`) next to MIC_SRC
-- [ ] **Volume sliders**: separate controls for the peer's voice and their system audio
-- [ ] **Attention when unfocused:** flash the taskbar button and an optional Windows
-      notification for a chat message, an incoming file, the peer starting a share, or the link
-      dropping
-- [ ] **One-click source switch** while sharing (now: STOP_SHARE, then SHARE_SCR)
+- [x] **Output device selection** (speakers / headset, `setSinkId`): AUDIO_OUT next to MIC_SRC
+- [x] **Volume sliders**: peer voice on the remote card, SYS_VOL over the feed while the peer
+      shares with sound
+- [x] **Notifications:** synthesized cyberpunk sounds (message / link down / system / UI),
+      highlights that stay lit until seen, taskbar flash in the background, settings + TEST
+      buttons. (Windows toast pop-ups were not added; the taskbar flash covers "look here")
+- [x] **Source switch while sharing:** SWITCH / STOP split the share button; the picker opens
+      with the live source preselected, and the viewer's feed cuts over without a gap
 - [ ] **COPY_LOG** button: copies the KERNEL_LOG with IPs and payloads masked, for bug reports
 - [ ] **NAT check** in SETTINGS: says upfront "your network needs TURN" (symmetric NAT / CGNAT,
       detected with two STUN servers)

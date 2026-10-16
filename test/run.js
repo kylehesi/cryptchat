@@ -26,10 +26,23 @@ function runUnit() {
   return result.status === 0;
 }
 
+const FILE_TIMEOUT_MS = 8 * 60 * 1000; // safety net above the harness's own per-test timeout
+
 function runE2eFile(file) {
+  // A syntax error would make Electron show a blocking error dialog: catch it here instead.
+  const syntax = spawnSync(process.execPath, ['--check', path.join(E2E_DIR, file)], { encoding: 'utf8' });
+  if (syntax.status !== 0) {
+    console.log(`  ✖ ${file}: syntax error\n${syntax.stderr.trim().split('\n').slice(0, 6).map((l) => `      ${l}`).join('\n')}`);
+    return Promise.resolve({ file, ok: false, skipped: false });
+  }
+
   return new Promise((resolve) => {
     const started = Date.now();
     const child = spawn(electron, [path.join(E2E_DIR, file)], { stdio: ['ignore', 'pipe', 'pipe'] });
+    const killer = setTimeout(() => {
+      output += `\nFAIL ${file}: killed after ${FILE_TIMEOUT_MS / 60000} min (hung)`;
+      child.kill();
+    }, FILE_TIMEOUT_MS);
     let output = '';
     child.stdout.on('data', (chunk) => {
       output += chunk;
@@ -38,6 +51,7 @@ function runE2eFile(file) {
       output += chunk;
     });
     child.on('exit', (code) => {
+      clearTimeout(killer);
       // Chromium prints its own [pid:...:ERROR:...] noise on stderr; show only our lines.
       const lines = output.split(/\r?\n/).filter((line) => line && !/^\[\d+:\d+\//.test(line));
       const verdict = lines.find((line) => /^(PASS|FAIL|SKIP) /.test(line));

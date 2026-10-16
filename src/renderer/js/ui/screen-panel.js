@@ -1,9 +1,13 @@
 import { log } from '../core/logger.js';
+import { bindVolume } from './av-panel.js';
 
-/** SHARE_SCR, the source picker dialog, the incoming feed, [FULL] and [ PIP ]. */
+/** SHARE_SCR / SWITCH / STOP, the source picker dialog, the incoming feed, [FULL] and [ PIP ]. */
 export function mountScreenPanel({ screenShare, connection, els }) {
-  const { shareButton, dialog, grid, refreshButton, audioCheck, startButton, cancelButton } = els;
+  const { shareButton, switchButton, dialog, grid, refreshButton, audioCheck, startButton, cancelButton } = els;
   const { screen, video, placeholder, badge, rxStats, fullButton, pipButton, codecSelect } = els;
+  const { systemVolumeBox, systemVolume, systemVolumeValue } = els;
+
+  bindVolume(systemVolume, screenShare.audioVolume, 'SYS_VOL', (value) => screenShare.setAudioVolume(value), systemVolumeValue);
 
   let sources = [];
   let selectedId = null;
@@ -13,6 +17,11 @@ export function mountScreenPanel({ screenShare, connection, els }) {
   shareButton.addEventListener('click', () => {
     if (screenShare.local) screenShare.stop();
     else openPicker();
+  });
+
+  // Change what is shared without stopping: the viewer's feed cuts straight to the new source.
+  switchButton.addEventListener('click', () => {
+    if (screenShare.local) openPicker();
   });
 
   refreshButton.addEventListener('click', loadSources);
@@ -35,8 +44,16 @@ export function mountScreenPanel({ screenShare, connection, els }) {
   });
 
   async function openPicker() {
-    selectedId = null;
-    startButton.disabled = true;
+    const live = screenShare.local;
+    // Switching: start from what is live now (source, audio, preset), so one click changes one thing.
+    selectedId = live?.sourceId ?? null;
+    if (live) {
+      audioCheck.checked = live.withAudio;
+      const preset = dialog.querySelector(`input[name="share-preset"][value="${live.preset}"]`);
+      if (preset) preset.checked = true;
+    }
+    startButton.textContent = live ? 'SWITCH_SOURCE' : 'START_BROADCAST';
+    startButton.disabled = !selectedId;
     dialog.showModal();
     await loadSources();
   }
@@ -85,7 +102,14 @@ export function mountScreenPanel({ screenShare, connection, els }) {
     const kind = document.createElement('span');
     kind.className = 'source-kind';
     kind.textContent = source.kind === 'screen' ? '[SCR] ' : '[WIN] ';
-    name.append(kind, source.name);
+    name.append(kind);
+    if (screenShare.local?.sourceId === source.id) {
+      const live = document.createElement('span');
+      live.className = 'source-live';
+      live.textContent = '● LIVE ';
+      name.append(live);
+    }
+    name.append(source.name);
 
     item.append(thumb, name);
     item.addEventListener('click', () => {
@@ -106,8 +130,10 @@ export function mountScreenPanel({ screenShare, connection, els }) {
 
   let broadcastName = '';
   screenShare.addEventListener('local', ({ detail }) => {
-    shareButton.textContent = detail ? 'STOP_SHARE' : 'SHARE_SCR';
+    shareButton.textContent = detail ? 'STOP' : 'SHARE_SCR';
+    shareButton.title = detail ? 'Stop sharing' : '';
     shareButton.classList.toggle('btn-danger', Boolean(detail));
+    switchButton.hidden = !detail;
     badge.hidden = !detail;
     broadcastName = detail?.name ?? '';
     badge.textContent = detail ? `● BROADCASTING > ${broadcastName}` : '';
@@ -154,6 +180,7 @@ export function mountScreenPanel({ screenShare, connection, els }) {
     }
     video.hidden = !detail.active;
     placeholder.hidden = detail.active;
+    systemVolumeBox.hidden = !(detail.active && detail.audio);
     fullButton.disabled = !detail.active;
     pipButton.disabled = !detail.active;
   });

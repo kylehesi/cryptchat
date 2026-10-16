@@ -116,21 +116,36 @@
                 <svg class="icon" data-role="mic" aria-label="Microphone"><use href="#i-mic"/></svg>
                 <svg class="icon" data-role="audio" aria-label="Audio output"><use href="#i-headphones"/></svg>
               </span>
+              <input class="volume" id="vol-voice" type="range" min="0" max="100" step="5" value="100"
+                     aria-label="Peer voice volume" title="VOICE_VOL 100%" disabled>
               <button class="btn btn-tiny" id="btn-fullscreen" type="button" disabled>[FULL]</button>
             </article>
           </div>
 
           <div class="controls">
-            <div class="mic-row">
-              <label class="field-label" for="mic-src">MIC_SRC:</label>
-              <select id="mic-src" class="select">
-                <option>[ NO DEVICES ]</option>
-              </select>
+            <!-- Input and output side by side: same height as the old single row -->
+            <div class="device-row">
+              <div class="device-field">
+                <label class="field-label" for="mic-src">MIC_SRC:</label>
+                <select id="mic-src" class="select">
+                  <option>[ NO DEVICES ]</option>
+                </select>
+              </div>
+              <div class="device-field">
+                <label class="field-label" for="audio-out">AUDIO_OUT:</label>
+                <select id="audio-out" class="select">
+                  <option>[ NO DEVICES ]</option>
+                </select>
+              </div>
             </div>
             <div class="btn-row">
-              <button class="btn" id="btn-mic" type="button">TOGGLE_MIC</button>
-              <button class="btn" id="btn-deafen" type="button">DEAFEN</button>
-              <button class="btn" id="btn-share" type="button" disabled>SHARE_SCR</button>
+              <button class="btn" id="btn-mic" type="button" data-sound="none">TOGGLE_MIC</button>
+              <button class="btn" id="btn-deafen" type="button" data-sound="none">DEAFEN</button>
+              <!-- While sharing this cell splits into [ SWITCH ] [ STOP ] -->
+              <div class="share-cell">
+                <button class="btn" id="btn-switch" type="button" title="Share another screen or window without stopping" hidden>SWITCH</button>
+                <button class="btn" id="btn-share" type="button" data-sound="none" disabled>SHARE_SCR</button>
+              </div>
             </div>
           </div>
 
@@ -139,6 +154,13 @@
             <p class="screen-placeholder" id="screen-placeholder">[ NO INCOMING FEED ]</p>
             <p class="screen-badge" id="screen-badge" hidden></p>
             <p class="screen-stats" id="screen-rx" hidden></p>
+            <!-- Only while the peer shares WITH system audio -->
+            <div class="screen-volume" id="screen-volume" hidden>
+              <label class="field-label" for="vol-system">SYS_VOL</label>
+              <input class="volume" id="vol-system" type="range" min="0" max="100" step="5" value="100"
+                     aria-label="Peer system audio volume">
+              <output id="vol-system-value" for="vol-system">100%</output>
+            </div>
             <button class="btn btn-accent btn-pip" id="btn-pip" type="button" disabled>[ PIP ]</button>
           </div>
         </div>
@@ -177,6 +199,23 @@
           <option value="VP8">VP8 (lightest, most compatible)</option>
           <option value="H264">H264 (hardware, blurs small text)</option>
         </select>
+      </fieldset>
+      <fieldset class="settings-group" id="notify-settings">
+        <legend class="field-label">NOTIFICATIONS:</legend>
+        <label class="check"><input type="checkbox" data-key="eventsEnabled"> EVENT_SOUNDS (messages, link down, system alerts)</label>
+        <label class="check"><input type="checkbox" data-key="uiEnabled"> UI_SOUNDS (buttons, mic/deafen, screen share)</label>
+        <label class="check"><input type="checkbox" data-key="flashEnabled"> FLASH_TASKBAR (while in the background)</label>
+        <div class="settings-row settings-row-center">
+          <label class="field-label settings-row-label" for="fx-volume">FX_VOLUME:</label>
+          <input class="volume volume-wide" id="fx-volume" type="range" min="0" max="100" step="5">
+          <output class="settings-row-value" id="fx-volume-value" for="fx-volume"></output>
+        </div>
+        <div class="settings-row">
+          <button class="btn btn-header" type="button" data-sound="none" data-test-sound="message">TEST_MSG</button>
+          <button class="btn btn-header" type="button" data-sound="none" data-test-sound="disconnect">TEST_DOWN</button>
+          <button class="btn btn-header" type="button" data-sound="none" data-test-sound="console">TEST_SYS</button>
+          <button class="btn btn-header" type="button" data-sound="none" data-test-sound="ui:on">TEST_UI</button>
+        </div>
       </fieldset>
       <fieldset class="settings-group" id="network-settings">
         <legend class="field-label">NETWORK:</legend>
@@ -237,14 +276,14 @@
       </section>
       <section>
         <h3>03 // TALK &amp; CHAT</h3>
-        <p>Pick your microphone in <kbd>MIC_SRC</kbd>. <kbd>TOGGLE_MIC</kbd> mutes you,
-           <kbd>DEAFEN</kbd> mutes everything. Set an alias above the chat, type, press Enter.</p>
+        <p>Pick your microphone in <kbd>MIC_SRC</kbd> and your speakers or headset in <kbd>AUDIO_OUT</kbd>. <kbd>TOGGLE_MIC</kbd> mutes you,
+           <kbd>DEAFEN</kbd> mutes everything. The slider on the peer's card sets their voice volume. Set an alias above the chat, type, press Enter.</p>
       </section>
       <section>
         <h3>04 // SHARE SCREEN</h3>
-        <p><kbd>SHARE_SCR</kbd> → pick a screen or window. <kbd>SHARE_SYSTEM_AUDIO</kbd> sends your PC's sound
+        <p><kbd>SHARE_SCR</kbd> → pick a screen or window. While sharing, <kbd>SWITCH</kbd> changes the source (e.g. browser → game) without stopping, and <kbd>STOP</kbd> ends it. <kbd>SHARE_SYSTEM_AUDIO</kbd> sends your PC's sound
            (your peer never hears their own voice back). <kbd>TEXT/CODE</kbd> = sharp, <kbd>MOTION/GAMES</kbd> = smooth.
-           Watching: <kbd>[FULL]</kbd> for fullscreen, <kbd>[ PIP ]</kbd> for a floating window.</p>
+           Watching: <kbd>SYS_VOL</kbd> (top right) sets the shared sound's volume, <kbd>[FULL]</kbd> for fullscreen, <kbd>[ PIP ]</kbd> for a floating window.</p>
       </section>
       <section>
         <h3>05 // SEND FILES</h3>
@@ -253,7 +292,13 @@
            files go straight to disk over the same encrypted link. Either side can <kbd>CANCEL</kbd>.</p>
       </section>
       <section>
-        <h3>06 // TROUBLESHOOT</h3>
+        <h3>06 // NOTIFICATIONS</h3>
+        <p>Messages, incoming files, a dropped link and system alerts play a sound, light up what changed until you
+           look, and flash the taskbar button while CryptChat is in the background. Turn them off, set the volume or
+           try each sound in <kbd>[ ⚙ ]</kbd> → NOTIFICATIONS.</p>
+      </section>
+      <section>
+        <h3>07 // TROUBLESHOOT</h3>
         <ul>
           <li><b>"ICE failed":</b> your networks cannot reach each other directly (e.g. mobile/CGNAT).
               One of you needs a TURN relay: <kbd>[ ⚙ ]</kbd> → NETWORK.</li>
@@ -286,7 +331,7 @@
     </div>
     <footer class="modal-footer">
       <button class="btn" id="btn-source-cancel" type="button">CANCEL</button>
-      <button class="btn btn-accent" id="btn-source-start" type="button" disabled>START_BROADCAST</button>
+      <button class="btn btn-accent" id="btn-source-start" type="button" data-sound="none" disabled>START_BROADCAST</button>
     </footer>
   </dialog>
 

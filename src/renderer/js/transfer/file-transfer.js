@@ -335,8 +335,10 @@ export class FileTransfers extends EventTarget {
     } else {
       const label = { declined: 'declined', canceled: 'canceled', failed: 'failed' }[status];
       const line = `File ${label}: ${transfer.name}${reason ? ` (${reason})` : ''}`;
+      // Our own cancel/decline only confirms a click: no notification for it.
+      const ownAction = reason === 'by you' || (status === 'declined' && transfer.direction === 'in');
       if (status === 'failed') log.err(line);
-      else log.warn(line);
+      else log.warn(line, { notify: !ownAction });
     }
     this.#changed(transfer);
   }
