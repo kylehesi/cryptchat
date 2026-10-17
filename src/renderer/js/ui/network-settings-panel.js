@@ -3,7 +3,7 @@ import { staticTurn } from '../net/ice-config.js';
 import { testTurn } from '../net/turn-test.js';
 
 /** NETWORK section of the settings dialog: edit, test and save STUN/TURN settings. */
-export function mountNetworkSettings({ networkSettings, els }) {
+export function mountNetworkSettings({ networkSettings, privacy, els }) {
   const { stun, cfKey, cfToken, turnUrls, turnUser, turnPass, relayOnly, testButton, defaultsButton, saveButton, status } = els;
 
   networkSettings.addEventListener('change', ({ detail }) => fill(detail.config));
@@ -85,8 +85,13 @@ export function mountNetworkSettings({ networkSettings, els }) {
     };
   }
 
+  // Status lines can contain a TURN server IP: keep the raw text, draw it masked if needed.
+  let lastStatus = { text: '', kind: undefined };
+  privacy.addEventListener('change', () => setStatus(lastStatus.text, lastStatus.kind));
+
   function setStatus(text, kind) {
-    status.textContent = text;
+    lastStatus = { text, kind };
+    status.textContent = privacy.maskText(text);
     status.classList.toggle('is-ok', kind === 'ok');
     status.classList.toggle('is-err', kind === 'err');
   }

@@ -48,14 +48,18 @@
         </header>
         <div class="panel-body stack">
           <label class="field-label" for="local-payload">1. LOCAL_PAYLOAD (OFFER/ANSWER):</label>
-          <textarea id="local-payload" class="payload" readonly spellcheck="false"
-                    placeholder="[ WAITING FOR GENERATION ]"></textarea>
+          <div class="payload-box">
+            <textarea id="local-payload" class="payload" readonly spellcheck="false"
+                      placeholder="[ WAITING FOR GENERATION ]"></textarea>
+          </div>
           <button class="btn" id="btn-generate" type="button">GENERATE_PAYLOAD</button>
 
           <div class="stack" id="remote-section">
             <label class="field-label gap-top" for="remote-payload">2. REMOTE_PAYLOAD (INJECT):</label>
-            <textarea id="remote-payload" class="payload" spellcheck="false"
-                      placeholder="[ INJECT REMOTE HASH HERE ]"></textarea>
+            <div class="payload-box">
+              <textarea id="remote-payload" class="payload" spellcheck="false"
+                        placeholder="[ INJECT REMOTE HASH HERE ]"></textarea>
+            </div>
             <button class="btn" id="btn-connect" type="button">EXECUTE_CONNECT</button>
           </div>
 
@@ -200,6 +204,10 @@
           <option value="H264">H264 (hardware, blurs small text)</option>
         </select>
       </fieldset>
+      <fieldset class="settings-group" id="privacy-settings">
+        <legend class="field-label">PRIVACY:</legend>
+        <label class="check"><input type="checkbox" id="hide-sensitive"> HIDE_IP_AND_PAYLOAD (for streaming; click a payload to copy it)</label>
+      </fieldset>
       <fieldset class="settings-group" id="notify-settings">
         <legend class="field-label">NOTIFICATIONS:</legend>
         <label class="check"><input type="checkbox" data-key="eventsEnabled"> EVENT_SOUNDS (messages, link down, system alerts)</label>
@@ -223,16 +231,16 @@
         <textarea id="net-stun" class="payload payload-short" spellcheck="false"></textarea>
         <span class="field-label">CLOUDFLARE_TURN (optional, credentials minted per link):</span>
         <div class="settings-row">
-          <input id="net-cf-key" class="input" type="text" spellcheck="false" autocomplete="off"
+          <input id="net-cf-key" class="input sensitive" type="text" spellcheck="false" autocomplete="off"
                  placeholder="> TURN_KEY_ID" aria-label="Cloudflare TURN key ID">
           <input id="net-cf-token" class="input" type="password" autocomplete="off"
                  placeholder="> API_TOKEN" aria-label="Cloudflare TURN API token">
         </div>
         <label class="field-label" for="net-turn-urls">CUSTOM_TURN_URLS (one per line, optional):</label>
-        <textarea id="net-turn-urls" class="payload payload-short" spellcheck="false"
+        <textarea id="net-turn-urls" class="payload payload-short sensitive" spellcheck="false"
                   placeholder="turn:turn.example.com:3478&#10;turns:turn.example.com:5349"></textarea>
         <div class="settings-row">
-          <input id="net-turn-user" class="input" type="text" spellcheck="false" autocomplete="off"
+          <input id="net-turn-user" class="input sensitive" type="text" spellcheck="false" autocomplete="off"
                  placeholder="> TURN_USER" aria-label="TURN username">
           <input id="net-turn-pass" class="input" type="password" autocomplete="off"
                  placeholder="> TURN_PASS" aria-label="TURN password">
@@ -268,6 +276,8 @@
               The link opens and the KERNEL_LOG header shows <kbd>LINK: …</kbd>.</li>
         </ol>
         <p>Payloads are single-use. For a new link, generate new ones.</p>
+        <p>Streaming or sharing screenshots? <kbd>[ ⚙ ]</kbd> → PRIVACY → <kbd>HIDE_IP_AND_PAYLOAD</kbd> hides payloads and
+           IP addresses on screen. Click a hidden payload to copy it.</p>
       </section>
       <section>
         <h3>02 // VERIFY</h3>

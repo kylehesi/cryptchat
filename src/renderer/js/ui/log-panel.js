@@ -10,12 +10,22 @@ const timeFormat = new Intl.DateTimeFormat('en-US', {
   hour12: true,
 });
 
-/** Renders log entries into `container`, auto-scrolling only if the user is already at the bottom. */
-export function mountLogPanel(container) {
-  return log.subscribe((entry) => {
+/**
+ * Renders log entries into `container`, auto-scrolling only if the user is already at the bottom.
+ * With HIDE_IP_AND_PAYLOAD on, IP addresses are masked; toggling it redraws the existing lines.
+ */
+export function mountLogPanel(container, privacy) {
+  const render = (entry) => {
     const line = document.createElement('div');
     line.className = `log-line log-${entry.level}`;
-    line.textContent = `[${timeFormat.format(entry.time)}] ${entry.message}`;
-    appendToLog(container, line, MAX_LINES);
+    line.textContent = `[${timeFormat.format(entry.time)}] ${privacy.maskText(entry.message)}`;
+    return line;
+  };
+
+  privacy.addEventListener('change', () => {
+    container.replaceChildren(...log.history().slice(-MAX_LINES).map(render));
+    container.scrollTop = container.scrollHeight;
   });
+
+  return log.subscribe((entry) => appendToLog(container, render(entry), MAX_LINES));
 }

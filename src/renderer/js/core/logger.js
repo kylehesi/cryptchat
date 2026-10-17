@@ -28,6 +28,9 @@ export const log = {
   warn: (message, options) => write('warn', message, options),
   err: (message, options) => write('err', message, options),
 
+  /** A copy of the kept history, oldest first (e.g. to redraw the log panel). */
+  history: () => [...history],
+
   /** Replays existing history to `fn`, then calls it for every new entry. Returns an unsubscribe function. */
   subscribe(fn) {
     history.forEach(fn);

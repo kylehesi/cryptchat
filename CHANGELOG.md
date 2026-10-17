@@ -5,10 +5,30 @@ bumps PATCH, and a bigger milestone bumps MINOR. Dates are YYYY-MM-DD.
 
 | Version | Date | In one line |
 |---|---|---|
-| [**v0.2.0**](#v020--quality-of-life) | 2026-10-16 | Speaker choice, volume sliders, notifications with sounds, switch the shared screen live |
+| [**v0.2.1**](#v021--privacy-mode) | 2026-10-17 | Hide IPs and payloads on screen (for streaming) |
+| [v0.2.0](#v020--quality-of-life) | 2026-10-16 | Speaker choice, volume sliders, notifications with sounds, switch the shared screen live |
 | [v0.1.2](#v012--test-suite) | 2026-10-16 | Test suite + CI; two bugs fixed (lost goodbye, mic re-opening) |
 | [v0.1.1](#v011--sharper-screen-share) | 2026-10-15 | AV1 screen share: twice the frame rate on slow links; live stats |
 | [v0.1.0](#v010--first-pre-release) | 2026-10-15 | First pre-release: calls, chat, screen, files, TURN, verification |
+
+---
+
+## v0.2.1 — Privacy mode
+
+*2026-10-17*
+
+**Highlights**
+- Stream or screenshot the app safely: one switch hides your IP addresses and payloads.
+
+**Added**
+- **HIDE_IP_AND_PAYLOAD** (Settings → PRIVACY), for streaming or screenshots: payload boxes show
+  `[ HIDDEN · n CHARS · CLICK TO COPY ]` and a click copies the real payload. IP addresses in
+  KERNEL_LOG and status lines are masked, and the TURN address, user and Cloudflare key fields
+  are dotted. Turning it off redraws everything, old log lines included.
+
+**Fixed**
+- "Payload copied" no longer reports success before the clipboard write has actually finished
+  (Electron's clipboard API is asynchronous now).
 
 ---
 

@@ -13,7 +13,11 @@ const PHASE_UI = {
 };
 
 /** Wires CONNECTION_MATRIX to a Connection. */
-export function mountConnectionPanel({ connection, localPayload, remotePayload, primaryButton, connectButton, remoteCard }) {
+export function mountConnectionPanel({ connection, privacy, localPayload, remotePayload, primaryButton, connectButton, remoteCard }) {
+  // HIDE_IP_AND_PAYLOAD: the local box already copies on click; the remote one copies while hidden.
+  privacy.bindPayloadBox(localPayload, { copyOnClick: false });
+  privacy.bindPayloadBox(remotePayload);
+
   primaryButton.addEventListener('click', () => {
     if (connection.phase === 'idle') connection.generateOffer();
     else connection.terminate();
@@ -42,6 +46,7 @@ export function mountConnectionPanel({ connection, localPayload, remotePayload, 
 
   connection.addEventListener('local-payload', ({ detail }) => {
     localPayload.value = detail.payload;
+    privacy.refreshPayloads();
     copyToClipboard(detail.payload);
   });
 
@@ -51,6 +56,7 @@ export function mountConnectionPanel({ connection, localPayload, remotePayload, 
       remotePayload.value = '';
     }
     if (detail.phase === 'connected') remotePayload.value = '';
+    privacy.refreshPayloads();
     render(detail.phase);
   });
 

@@ -82,11 +82,15 @@ function hardenSession() {
 function registerIpc() {
   // Done here rather than with navigator.clipboard: the payload is ready seconds after the
   // click, when the page's user-activation window may already have expired.
-  ipcMain.handle('clipboard:write', (event, text) => {
+  ipcMain.handle('clipboard:write', async (event, text) => {
     if (!isOwnOrigin(event.senderFrame?.url)) return false;
     if (typeof text !== 'string' || text.length > MAX_CLIPBOARD_CHARS) return false;
-    clipboard.writeText(text);
-    return true;
+    try {
+      await clipboard.writeText(text); // returns a promise in current Electron: wait, so "copied" is true
+      return true;
+    } catch {
+      return false;
+    }
   });
 
   // Notifications: flash the taskbar button while the window is in the background.

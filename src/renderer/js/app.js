@@ -16,6 +16,7 @@ import { mountChatPanel } from './ui/chat-panel.js';
 import { mountConnectionPanel } from './ui/connection-panel.js';
 import { mountLinkStatus } from './ui/link-status.js';
 import { mountLogPanel } from './ui/log-panel.js';
+import { Privacy } from './ui/privacy.js';
 import { mountNetworkSettings } from './ui/network-settings-panel.js';
 import { mountScreenPanel } from './ui/screen-panel.js';
 import { mountTransferPanel } from './ui/transfer-panel.js';
@@ -26,7 +27,15 @@ import { mountDialog } from './ui/dialog.js';
 
 const $ = (id) => document.getElementById(id);
 
-mountLogPanel($('kernel-log'));
+const privacy = new Privacy();
+mountLogPanel($('kernel-log'), privacy);
+
+const hideSensitive = $('hide-sensitive');
+hideSensitive.checked = privacy.hidden;
+hideSensitive.addEventListener('change', () => {
+  privacy.set(hideSensitive.checked);
+  log.info(`HIDE_IP_AND_PAYLOAD: ${privacy.hidden ? 'ON' : 'OFF'}`);
+});
 
 mountDialog({
   dialog: $('settings-dialog'),
@@ -54,6 +63,7 @@ const chat = new Chat(connection);
 
 mountConnectionPanel({
   connection,
+  privacy,
   localPayload: $('local-payload'),
   remotePayload: $('remote-payload'),
   primaryButton: $('btn-generate'),
@@ -116,6 +126,7 @@ mountAudioSettings({ microphone, container: $('audio-settings') });
 
 mountNetworkSettings({
   networkSettings,
+  privacy,
   els: {
     stun: $('net-stun'),
     cfKey: $('net-cf-key'),
@@ -183,7 +194,7 @@ mountNotifications({
 window.addEventListener('beforeunload', () => connection.terminate());
 
 // Development only (never in a packaged build): poke at the live objects from DevTools (F12).
-if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification, transfers, speakers, sounds, attention };
+if (window.cc.dev) window.__cc = { connection, microphone, voice, screenShare, networkSettings, verification, transfers, speakers, sounds, attention, privacy };
 
 const { electron, chrome } = window.cc.versions;
 log.info(`--- SYSTEM BOOT --- CryptChat v${window.cc.version}`);
