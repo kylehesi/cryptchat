@@ -17,6 +17,7 @@ import { mountConnectionPanel } from './ui/connection-panel.js';
 import { mountLinkStatus } from './ui/link-status.js';
 import { mountLogPanel } from './ui/log-panel.js';
 import { Privacy } from './ui/privacy.js';
+import { mountNatCheck } from './ui/nat-check-button.js';
 import { mountNetworkSettings } from './ui/network-settings-panel.js';
 import { mountScreenPanel } from './ui/screen-panel.js';
 import { mountTransferPanel } from './ui/transfer-panel.js';
@@ -66,6 +67,7 @@ mountConnectionPanel({
   privacy,
   localPayload: $('local-payload'),
   remotePayload: $('remote-payload'),
+  remoteClear: $('btn-remote-clear'),
   primaryButton: $('btn-generate'),
   connectButton: $('btn-connect'),
   remoteCard: $('peer-remote'),
@@ -124,6 +126,8 @@ mountAvPanel({
 
 mountAudioSettings({ microphone, container: $('audio-settings') });
 
+mountNatCheck({ networkSettings, button: $('btn-nat-check') });
+
 mountNetworkSettings({
   networkSettings,
   privacy,
@@ -135,6 +139,7 @@ mountNetworkSettings({
     turnUser: $('net-turn-user'),
     turnPass: $('net-turn-pass'),
     relayOnly: $('net-relay-only'),
+    holdOpen: $('net-hold-open'),
     testButton: $('btn-net-test'),
     defaultsButton: $('btn-net-defaults'),
     saveButton: $('btn-net-save'),

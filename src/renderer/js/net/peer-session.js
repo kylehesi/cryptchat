@@ -15,9 +15,11 @@
 // answerer is the "polite" peer: on an offer collision it rolls back and accepts the other offer.
 
 import { decodeMessage, encodeMessage } from './protocol.js';
-import { enableOpusHifi } from './sdp.js';
+import { enableOpusHifi, withGeneration } from './sdp.js';
 
 const ICE_GATHER_TIMEOUT_MS = 4000;
+// Candidate-pair states that mean Chromium is still checking (or already through).
+const ACTIVE_PAIR_STATES = new Set(['frozen', 'waiting', 'in-progress', 'succeeded']);
 
 // Media slots, in m-line order. Created up front so later media only needs replaceTrack().
 const MEDIA_SLOTS = [
@@ -63,6 +65,9 @@ export class PeerSession extends EventTarget {
   #makingOffer = false;
   #ignoreOffer = false;
   #signalQueue = Promise.resolve();
+  #offerCandidates = []; // answerer: the offer's candidates, for holdOpen()
+  #remoteUfrag = null;
+  #remoteGeneration = 0; // > 0 once holdOpen() re-added candidates (see withGeneration in sdp.js)
 
   /**
    * @param {RTCConfiguration} rtcConfig
@@ -131,6 +136,8 @@ export class PeerSession extends EventTarget {
     // can succeed on a fast path within milliseconds, Chromium stops gathering, and the answer
     // ships without our public (srflx) candidate.
     const { sdp, candidates } = splitCandidates(offer.sdp);
+    this.#offerCandidates = candidates;
+    this.#remoteUfrag = iceUfrag(sdp);
     await this.pc.setRemoteDescription(prepareRemote({ type: 'offer', sdp }));
 
     // Transceivers created by the offer come back in m-line order, as recvonly.
@@ -153,6 +160,30 @@ export class PeerSession extends EventTarget {
       await this.pc.addIceCandidate(candidate).catch(() => {}); // one bad candidate must not kill the rest
     }
     return answer;
+  }
+
+  /**
+   * HOLD_OPEN (answerer, while the offerer has not injected our answer yet). Our checks toward
+   * the offer's candidates are what keep our NAT's filter open for the peer: a port-restricted
+   * NAT only lets in packets from addresses we sent to recently. Chromium gives up after ~15 s
+   * without replies, but the peer only starts its own checks once its user pastes our answer.
+   * If no check is running any more, the offer's candidates are added again as a new
+   * generation, which makes Chromium start over. Returns true if it restarted the checks.
+   */
+  async holdOpen() {
+    if (this.role !== 'answerer' || !this.#offerCandidates.length) return false;
+    const stats = await this.pc.getStats();
+    let checking = false;
+    stats.forEach((report) => {
+      if (report.type === 'candidate-pair' && (ACTIVE_PAIR_STATES.has(report.state) || report.responsesReceived > 0)) checking = true;
+    });
+    if (checking || this.pc.signalingState === 'closed') return false;
+
+    this.#remoteGeneration += 1;
+    for (const candidate of this.#offerCandidates) {
+      await this.pc.addIceCandidate({ ...candidate, candidate: withGeneration(candidate.candidate, this.#remoteGeneration) }).catch(() => {});
+    }
+    return true;
   }
 
   /** Offerer: applies the remote answer. ICE starts connecting right after. */
@@ -231,7 +262,16 @@ export class PeerSession extends EventTarget {
         this.#ignoreOffer = !polite && collision;
         if (this.#ignoreOffer) return;
 
+        // After holdOpen(), new remote credentials (ICE restart) need a higher generation too,
+        // or Chromium would keep the stale connections for addresses it already knows.
+        const ufrag = iceUfrag(description.sdp);
+        const newCredentials = Boolean(ufrag) && ufrag !== this.#remoteUfrag;
         await pc.setRemoteDescription(prepareRemote(description)); // rolls back on collision
+        if (ufrag) this.#remoteUfrag = ufrag;
+        if (this.#remoteGeneration && newCredentials) {
+          this.#remoteGeneration += 1;
+          for (const candidate of splitCandidates(description.sdp).candidates) await this.#addRemoteCandidate(candidate).catch(() => {});
+        }
         if (description.type === 'offer') {
           await pc.setLocalDescription();
           this.send('control', 'sdp', { description: pc.localDescription.toJSON() });
@@ -240,7 +280,7 @@ export class PeerSession extends EventTarget {
         const candidate = message.candidate;
         if (candidate === null || typeof candidate !== 'object') return;
         try {
-          await pc.addIceCandidate(candidate);
+          await this.#addRemoteCandidate(candidate);
         } catch (error) {
           if (!this.#ignoreOffer) throw error; // candidates for an offer we ignored are expected to fail
         }
@@ -248,6 +288,13 @@ export class PeerSession extends EventTarget {
     } catch (error) {
       this.#emit('signal-error', { error });
     }
+  }
+
+  #addRemoteCandidate(candidate) {
+    const current = !candidate.usernameFragment || candidate.usernameFragment === this.#remoteUfrag;
+    if (!this.#remoteGeneration || !candidate.candidate || !current) return this.pc.addIceCandidate(candidate);
+    const { usernameFragment, ...rest } = candidate; // dropped: Chromium fills in the current one
+    return this.pc.addIceCandidate({ ...rest, candidate: withGeneration(candidate.candidate, this.#remoteGeneration) });
   }
 
   /** Resolves when gathering completes, or after a timeout with whatever was gathered. */
@@ -275,6 +322,10 @@ export class PeerSession extends EventTarget {
 }
 
 /** Removes a=candidate lines from an SDP and returns them as RTCIceCandidateInit objects. */
+function iceUfrag(sdp) {
+  return sdp.split('\r\n').find((line) => line.startsWith('a=ice-ufrag:'))?.slice('a=ice-ufrag:'.length) ?? null;
+}
+
 function splitCandidates(sdp) {
   const kept = [];
   const candidates = [];

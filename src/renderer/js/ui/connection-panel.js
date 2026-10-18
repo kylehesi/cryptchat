@@ -13,10 +13,17 @@ const PHASE_UI = {
 };
 
 /** Wires CONNECTION_MATRIX to a Connection. */
-export function mountConnectionPanel({ connection, privacy, localPayload, remotePayload, primaryButton, connectButton, remoteCard }) {
+export function mountConnectionPanel({ connection, privacy, localPayload, remotePayload, remoteClear, primaryButton, connectButton, remoteCard }) {
   // HIDE_IP_AND_PAYLOAD: the local box already copies on click; the remote one copies while hidden.
   privacy.bindPayloadBox(localPayload, { copyOnClick: false });
   privacy.bindPayloadBox(remotePayload);
+
+  // [×]: empty the paste box (the only way to clear it while its content is hidden).
+  remoteClear.addEventListener('click', () => {
+    remotePayload.value = '';
+    privacy.refreshPayloads();
+    remotePayload.focus(); // ready for the next Ctrl+V
+  });
 
   primaryButton.addEventListener('click', () => {
     if (connection.phase === 'idle') connection.generateOffer();
@@ -67,6 +74,7 @@ export function mountConnectionPanel({ connection, privacy, localPayload, remote
     primaryButton.disabled = !ui.primaryEnabled;
     connectButton.disabled = !ui.connectEnabled;
     remotePayload.readOnly = !ui.connectEnabled;
+    remoteClear.disabled = !ui.connectEnabled;
     remoteCard.classList.toggle('is-online', phase === 'connected');
     remoteCard.classList.toggle('is-unstable', phase === 'reconnecting');
   }

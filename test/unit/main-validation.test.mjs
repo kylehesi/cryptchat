@@ -39,6 +39,9 @@ test('network settings validation', () => {
   });
   assert.deepEqual(ok.errors, []);
   assert.deepEqual(ok.config.stunUrls, ['stun:a.test:3478'], 'trimmed, empties removed');
+  assert.equal(ok.config.holdOpenSec, 120, 'HOLD_OPEN defaults to 2 min (older saved settings have no value)');
+  assert.equal(validate({ holdOpenSec: 0 }).config.holdOpenSec, 0, 'HOLD_OPEN can be turned off');
+  assert.deepEqual(validate({ holdOpenSec: 3600 }).errors, ['Invalid HOLD_OPEN time.'], 'no hour-long holds');
 });
 
 test('Cloudflare response: TURN only, port 53 dropped, credentials required', () => {

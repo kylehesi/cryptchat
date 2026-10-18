@@ -39,3 +39,22 @@ export function enableOpusHifi(sdp, mLineIndex) {
 
   return lines.join('\r\n');
 }
+
+/**
+ * Rewrites an ICE candidate line ("candidate:…") so Chromium treats it as a new candidate:
+ * `generation` set, `ufrag` dropped (Chromium then fills in the current remote credentials).
+ *
+ * Chromium keeps one connection per remote address and only replaces it for a candidate of a
+ * higher generation. HOLD_OPEN uses that to restart checks that already gave up (see
+ * PeerSession.holdOpen), and every later remote candidate must then go up as well, or an ICE
+ * restart could not replace the connections HOLD_OPEN left behind.
+ */
+export function withGeneration(candidate, generation) {
+  const [head, ...rest] = candidate.split(' ');
+  const base = [head, ...rest.slice(0, 7)]; // foundation component transport priority address port typ type
+  const extras = rest.slice(7);
+  for (let i = 0; i + 1 < extras.length; i += 2) {
+    if (extras[i] !== 'generation' && extras[i] !== 'ufrag') base.push(extras[i], extras[i + 1]);
+  }
+  return [...base, 'generation', String(generation)].join(' ');
+}

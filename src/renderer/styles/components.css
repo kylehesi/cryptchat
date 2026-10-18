@@ -437,6 +437,20 @@
   pointer-events: none; /* clicks reach the textarea: copy / paste still work */
 }
 
+/* [×] in the corner of REMOTE_PAYLOAD: only while it holds something (works hidden or not) */
+.payload-clear {
+  position: absolute;
+  top: 5px;
+  right: 14px; /* clear of the textarea's scrollbar */
+  z-index: 1;
+  display: none;
+  background: var(--bg-input);
+}
+
+.payload-box.has-value .payload-clear {
+  display: inline-flex;
+}
+
 .hide-sensitive .sensitive {
   -webkit-text-security: disc;
 }
@@ -865,3 +879,13 @@
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-faint);
 }
+
+/* [ NAT_CHECK ]: colored by the last result (details in its tooltip and KERNEL_LOG). */
+.btn-nat.is-busy:disabled {
+  color: var(--text-dim);
+  cursor: progress;
+}
+
+.btn-nat.is-ok { border-color: var(--accent); color: var(--accent); }
+.btn-nat.is-warn { border-color: var(--warn); color: var(--warn); }
+.btn-nat.is-err { border-color: var(--danger); color: var(--danger); }

@@ -40,7 +40,7 @@ function e2e(name, body, { timeoutMs = 180000, switches = [], showWindows = fals
     started = true;
     first.webContents.once('did-finish-load', async () => {
       const b = new BrowserWindow({
-        width: 980, height: 600, useContentSize: true, show: showWindows,
+        width: 1110, height: 600, useContentSize: true, show: showWindows,
         webPreferences: {
           preload: PRELOAD, contextIsolation: true, sandbox: true, nodeIntegration: false,
           backgroundThrottling: false, additionalArguments: ['--cc-dev', '--cc-version=test'],

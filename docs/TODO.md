@@ -39,8 +39,9 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done
 - [x] **Source switch while sharing:** SWITCH / STOP split the share button; the picker opens
       with the live source preselected, and the viewer's feed cuts over without a gap
 - [ ] **COPY_LOG** button: copies the KERNEL_LOG with IPs and payloads masked, for bug reports
-- [ ] **NAT check** in SETTINGS: says upfront "your network needs TURN" (symmetric NAT / CGNAT,
-      detected with two STUN servers)
+- [x] **NAT check:** [ NAT_CHECK ] in the CONNECTION_MATRIX header says upfront whether the
+      network needs TURN (cone / symmetric / UDP blocked from two STUN servers; CGNAT and public
+      IPv6 noted). The left column grew to 480px for it, the minimum window to 1106×563
 - [ ] **Error messages** for every failure path (no mic, permission denied, bad payload, ICE
       failed, TURN refused), reviewed end to end
 - [ ] **Keyboard shortcuts:** mic toggle, deafen, **push-to-talk** (global hotkey), and a **panic

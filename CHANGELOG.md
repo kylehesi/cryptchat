@@ -5,11 +5,43 @@ bumps PATCH, and a bigger milestone bumps MINOR. Dates are YYYY-MM-DD.
 
 | Version | Date | In one line |
 |---|---|---|
-| [**v0.2.1**](#v021--privacy-mode) | 2026-10-17 | Hide IPs and payloads on screen (for streaming) |
+| [**v0.2.2**](#v022--direct-links-through-nats) | 2026-10-18 | NAT_CHECK, HOLD_OPEN for direct links between home NATs, bigger window |
+| [v0.2.1](#v021--privacy-mode) | 2026-10-17 | Hide IPs and payloads on screen (for streaming) |
 | [v0.2.0](#v020--quality-of-life) | 2026-10-16 | Speaker choice, volume sliders, notifications with sounds, switch the shared screen live |
 | [v0.1.2](#v012--test-suite) | 2026-10-16 | Test suite + CI; two bugs fixed (lost goodbye, mic re-opening) |
 | [v0.1.1](#v011--sharper-screen-share) | 2026-10-15 | AV1 screen share: twice the frame rate on slow links; live stats |
 | [v0.1.0](#v010--first-pre-release) | 2026-10-15 | First pre-release: calls, chat, screen, files, TURN, verification |
+
+---
+
+## v0.2.2 — Direct links through NATs
+
+*2026-10-18*
+
+**Highlights**
+- Press **[ NAT_CHECK ]** before exchanging payloads to know whether you need TURN.
+- Two home NATs now link directly even if the ANSWER takes a minute or two to come back
+  (**HOLD_OPEN**). Before, that ended in "ICE failed" after ~15 s.
+
+**Added**
+- **[ NAT_CHECK ]** in the CONNECTION_MATRIX header: before exchanging payloads, it tells you
+  whether your network can connect directly or needs TURN. Two STUN servers are asked for your
+  public address from the same socket: the same port for both (cone NAT) is green, a different
+  port per server (symmetric NAT) or no answer (UDP blocked) is red without TURN and yellow with
+  it. CGNAT (100.64.x.x) and public IPv6 are mentioned too. The verdict goes to KERNEL_LOG and
+  the button's tooltip.
+- **HOLD_OPEN** (Settings → NETWORK, default 2 min, OFF / 30 s – 5 min): after you send your
+  ANSWER, your side keeps checking the peer's addresses until they inject it, so your NAT stays
+  open for them. Before, Chromium gave up after ~15 s, and if the peer pasted later, two home
+  NATs that could link directly ended in "ICE failed". While it runs, an early ICE failure no
+  longer ends the attempt; a DTLS (tampering) failure still does at once.
+- **[×]** in the REMOTE_PAYLOAD box clears a pasted payload, also while HIDE_IP_AND_PAYLOAD
+  hides it.
+
+**Changed**
+- Bigger window: it opens at 1160×700 (shrunk to fit small screens) and remembers its size,
+  position and maximized state. The left column is 480px wide to fit the new button; the
+  minimum is 1106×563, so the right side never gets narrower than before.
 
 ---
 

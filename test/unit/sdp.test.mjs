@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { enableOpusHifi } from '../../src/renderer/js/net/sdp.js';
+import { enableOpusHifi, withGeneration } from '../../src/renderer/js/net/sdp.js';
 
 const SDP = [
   'v=0',
@@ -31,4 +31,12 @@ test('idempotent: applying twice does not duplicate parameters', () => {
 
 test('a section without Opus is left alone', () => {
   assert.equal(enableOpusHifi(SDP, 1), SDP);
+});
+
+test('withGeneration: generation replaced, ufrag dropped, the rest kept', () => {
+  const srflx = 'candidate:842163049 1 udp 1677729535 203.0.113.5 50000 typ srflx raddr 192.168.1.20 rport 50000 generation 0 ufrag Ab12 network-id 1 network-cost 10';
+  assert.equal(withGeneration(srflx, 3), 'candidate:842163049 1 udp 1677729535 203.0.113.5 50000 typ srflx raddr 192.168.1.20 rport 50000 network-id 1 network-cost 10 generation 3');
+  const bare = 'candidate:1 1 tcp 1518280447 192.168.1.20 9 typ host tcptype active';
+  assert.equal(withGeneration(bare, 1), 'candidate:1 1 tcp 1518280447 192.168.1.20 9 typ host tcptype active generation 1');
+  assert.equal(withGeneration(withGeneration(srflx, 2), 5), withGeneration(srflx, 5), 'idempotent apart from the number');
 });

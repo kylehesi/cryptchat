@@ -7,6 +7,7 @@ const { registerCapture } = require('./capture');
 const { registerSecureStore } = require('./secure-store');
 const { registerCloudflareTurn } = require('./cloudflare-turn');
 const { registerFileReceive } = require('./file-receive');
+const windowState = require('./window-state');
 
 // The renderer is served from a custom, privileged "app://" scheme instead of file://.
 // This gives the page a real secure origin (needed by getUserMedia & co.), lets ES modules
@@ -16,8 +17,6 @@ const APP_HOST = 'cryptchat';
 const APP_ORIGIN = `${APP_SCHEME}://${APP_HOST}`;
 const RENDERER_ROOT = path.join(__dirname, '..', 'renderer');
 const ICON_PATH = path.join(__dirname, '..', '..', 'build', 'icon.ico');
-const CONTENT_WIDTH = 978;
-const CONTENT_HEIGHT = 563;
 
 // Permissions the renderer may ask for. Everything else is denied.
 // (Screen capture does not go through this list; see capture.js.)
@@ -120,11 +119,9 @@ app.on('web-contents-created', (event, contents) => {
 });
 
 function createMainWindow() {
-  // Sized by content area (not the OS frame), so the layout gets the same room at any DPI.
+  const { maximized, ...bounds } = windowState.windowOptions(); // remembered or default size
   const win = new BrowserWindow({
-    width: CONTENT_WIDTH,
-    height: CONTENT_HEIGHT,
-    useContentSize: true,
+    ...bounds,
     backgroundColor: '#000000',
     // Installed builds use the icon embedded in CryptChat.exe; build/ is not packaged.
     icon: app.isPackaged ? undefined : ICON_PATH,
@@ -140,8 +137,8 @@ function createMainWindow() {
     },
   });
 
-  // Never smaller than the designed layout (it would clip); larger is fine.
-  win.setMinimumSize(...win.getSize());
+  // Never smaller than the compact layout (it would clip); size and position are remembered.
+  windowState.track(win, { maximized });
   win.once('ready-to-show', () => win.show());
 
   // No application menu; in development F12 still toggles DevTools.

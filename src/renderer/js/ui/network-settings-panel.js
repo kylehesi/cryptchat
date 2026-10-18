@@ -4,7 +4,7 @@ import { testTurn } from '../net/turn-test.js';
 
 /** NETWORK section of the settings dialog: edit, test and save STUN/TURN settings. */
 export function mountNetworkSettings({ networkSettings, privacy, els }) {
-  const { stun, cfKey, cfToken, turnUrls, turnUser, turnPass, relayOnly, testButton, defaultsButton, saveButton, status } = els;
+  const { stun, cfKey, cfToken, turnUrls, turnUser, turnPass, relayOnly, holdOpen, testButton, defaultsButton, saveButton, status } = els;
 
   networkSettings.addEventListener('change', ({ detail }) => fill(detail.config));
 
@@ -73,6 +73,7 @@ export function mountNetworkSettings({ networkSettings, privacy, els }) {
     turnUser.value = config.turn.username;
     turnPass.value = config.turn.credential;
     relayOnly.checked = config.relayOnly;
+    holdOpen.value = String(config.holdOpenSec ?? 120);
   }
 
   function read() {
@@ -82,6 +83,7 @@ export function mountNetworkSettings({ networkSettings, privacy, els }) {
       turn: { urls: lines(turnUrls), username: turnUser.value.trim(), credential: turnPass.value },
       cloudflare: { keyId: cfKey.value.trim(), apiToken: cfToken.value.trim() },
       relayOnly: relayOnly.checked,
+      holdOpenSec: Number(holdOpen.value),
     };
   }
 

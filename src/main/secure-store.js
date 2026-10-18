@@ -13,7 +13,9 @@ const DEFAULT_NETWORK = Object.freeze({
   turn: { urls: [], username: '', credential: '' },
   cloudflare: { keyId: '', apiToken: '' },
   relayOnly: false,
+  holdOpenSec: 120, // HOLD_OPEN: how long the answerer keeps its NAT open for the peer
 });
+const HOLD_OPEN_CHOICES = [0, 30, 60, 120, 180, 300];
 
 const MAX_STUN = 8;
 const MAX_TURN = 4;
@@ -54,7 +56,9 @@ function validate(input) {
       apiToken: field(input?.cloudflare?.apiToken, 'Cloudflare API token').trim(),
     },
     relayOnly: input?.relayOnly === true,
+    holdOpenSec: input?.holdOpenSec ?? DEFAULT_NETWORK.holdOpenSec,
   };
+  if (!HOLD_OPEN_CHOICES.includes(config.holdOpenSec)) errors.push('Invalid HOLD_OPEN time.');
 
   if (config.turn.urls.length && (!config.turn.username || !config.turn.credential)) {
     errors.push('TURN needs a username and a password.');

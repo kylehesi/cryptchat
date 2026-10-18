@@ -50,10 +50,26 @@ e2e('privacy', async (t) => {
   t.equal(await style(t, a, '#net-turn-urls', '-webkit-text-security'), 'disc', 'TURN URLs are dotted');
   t.equal(await style(t, a, '#net-cf-key', '-webkit-text-security'), 'disc', 'Cloudflare key ID is dotted');
 
+  // [×] clears the paste box (hidden text can't be selected and deleted by hand).
+  const typeInto = (win, id, value) => t.js(win, `(() => { const el = document.getElementById(${JSON.stringify(id)}); el.value = ${JSON.stringify(value)}; el.dispatchEvent(new Event('input')); })()`);
+  t.equal(await style(t, b, '#btn-remote-clear', 'display'), 'none', '[×] is hidden while the paste box is empty');
+  await t.click(b, 'btn-settings');
+  await t.change(b, '#hide-sensitive', true, 'checked');
+  await t.click(b, 'btn-settings-close');
+  await typeInto(b, 'remote-payload', 'CC1.garbage-pasted-by-mistake');
+  t.equal(await style(t, b, '#btn-remote-clear', 'display'), 'flex', '[×] appears once something is pasted');
+  t.match(await style(t, b, '.payload-box:has(#remote-payload)', 'content', '::after'), /HIDDEN · 29 CHARS/, 'the pasted text is hidden');
+  await t.click(b, 'btn-remote-clear');
+  t.equal(await t.val(b, 'remote-payload'), '', '[×] empties the paste box');
+  t.equal(await style(t, b, '#btn-remote-clear', 'display'), 'none', '[×] hides again');
+  t.equal(await style(t, b, '.payload-box:has(#remote-payload)', 'content', '::after'), 'none', 'the HIDDEN mask is gone');
+  t.ok(await t.js(b, `document.activeElement.id === 'remote-payload'`), 'the box is focused for the next paste');
+
   // The link still works with everything hidden.
   await t.setVal(b, 'remote-payload', payload);
   await t.click(b, 'btn-connect');
   await t.expect(async () => (await t.val(b, 'local-payload')).startsWith('CC1.'), 'B answers');
+  t.ok(await t.js(b, `document.getElementById('btn-remote-clear').disabled`), '[×] is disabled while the paste box is locked');
   await t.setVal(a, 'remote-payload', await t.val(b, 'local-payload'));
   await t.click(a, 'btn-connect');
   await t.expect(() => t.connected(), 'the link opens with hiding on', 20000);

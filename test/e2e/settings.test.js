@@ -17,6 +17,7 @@ e2e('settings', async (t) => {
     turn: { urls: ['turn:turn.example.test:3478'], username: 'alice', credential: 'super-secret-password' },
     cloudflare: { keyId: '', apiToken: '' },
     relayOnly: true,
+    holdOpenSec: 60,
   };
   t.ok((await set(good)).ok, 'a valid config is saved');
 

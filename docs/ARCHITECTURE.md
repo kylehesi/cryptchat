@@ -208,6 +208,32 @@ CC1.<base64url( deflate-raw( JSON{ t: "offer"|"answer", sdp: "...", v: 1 } ) )>
 - Live link stats in the KERNEL_LOG header: route, RTT, up/down bitrate, packet loss.
 - Guide for running your own `coturn`: [TURN.md](TURN.md).
 
+### 5.6 NAT_CHECK and HOLD_OPEN (direct links through NATs)
+
+- **NAT_CHECK** (`net/nat-check.js`) asks the STUN servers from one socket. Chromium reports one
+  srflx candidate per distinct mapping, so two candidates for the same base mean a symmetric
+  NAT (TURN needed). One mapping only counts as "cone" if each server also answered when asked
+  on its own (checked in parallel). Verified against a raw STUN client and RFC 5780 tests, and
+  in `test/e2e/nat-check.test.js` with fake STUN servers that play cone, symmetric and blocked.
+- **Why HOLD_OPEN exists:** most home NATs map ports independently of the destination but
+  *filter* by address and port: a packet only gets in from an address we sent to recently.
+  With copy-paste signaling the answerer starts its checks the moment it makes the answer, but
+  the offerer only starts once its user pastes that answer, often a minute later. Chromium
+  stops checking after ~15 s without replies, the answerer's NAT closes the hole, and the
+  offerer's checks then bounce off it: "ICE failed" between two NATs that could link directly.
+  Same-machine tests never show it, because there is no NAT in between.
+- **HOLD_OPEN** (`PeerSession.holdOpen()`, driven by `Connection` every 5 s while the answerer
+  waits): when no candidate pair is being checked any more, the offer's candidates are added
+  again with a higher `generation` (and no `ufrag`, so Chromium fills in the current one).
+  Chromium keeps one connection per remote address and only replaces it for a newer
+  generation, so this restarts the checks, and with them the hole. It stops once the link is
+  up or after the configured time (Settings → NETWORK, OFF / 30 s – 5 min, default 2 min).
+  While it runs, an early ICE "failed" does not end the attempt; a DTLS failure still does.
+- **Side effect handled:** after that, an ICE restart's candidates would be older than the
+  connections HOLD_OPEN left behind, and Chromium would keep the stale ones (no working pair
+  with the new credentials: measured). So once HOLD_OPEN has run, every later remote
+  candidate, in-band or in a new remote description, is re-generationed above them as well.
+
 ## 6. Verification code (SAS)
 
 Each side takes both DTLS fingerprints from the SDP (`a=fingerprint`), sorts them, and hashes

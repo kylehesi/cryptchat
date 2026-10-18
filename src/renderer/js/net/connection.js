@@ -32,6 +32,8 @@ import { countCandidates, describeRoute, diffSnapshots, getLinkSnapshot } from '
 const STATS_INTERVAL_MS = 2000;
 const ICE_RESTART_DELAY_MS = 4000; // give ICE a chance to recover by itself first
 const LINK_LOST_TIMEOUT_MS = 30000;
+const HOLD_OPEN_TICK_MS = 5000; // Chromium gives up after ~15 s, so a dead gap is at most ~5 s
+const WAITING_PHASES = new Set(['awaiting-peer', 'connecting']);
 
 export class Connection extends EventTarget {
   phase = 'idle';
@@ -41,6 +43,7 @@ export class Connection extends EventTarget {
   #statsTimer = null;
   #restartTimer = null;
   #lostTimer = null;
+  #holdTimer = null;
   #routeKey = null;
   #lastSnapshot = null;
 
@@ -130,6 +133,7 @@ export class Connection extends EventTarget {
       await this.#publishLocalPayload(answer);
       this.#setPhase('awaiting-peer');
       log.info('Send this ANSWER back to your peer. The link opens once they inject it.');
+      this.#startHoldOpen();
     } catch (error) {
       this.#fail('Could not create answer', error);
     }
@@ -214,10 +218,41 @@ export class Connection extends EventTarget {
   }
 
   #stopTimers() {
+    this.#stopHoldOpen();
     clearInterval(this.#statsTimer);
     clearTimeout(this.#restartTimer);
     clearTimeout(this.#lostTimer);
     this.#statsTimer = this.#restartTimer = this.#lostTimer = null;
+  }
+
+  // HOLD_OPEN (answerer): the offerer only starts its checks once its user has pasted our
+  // answer, which can take minutes. Until then PeerSession.holdOpen() keeps our checks, and with
+  // them our NAT's filter, alive. Stops when the link is up or after the configured time.
+  #startHoldOpen() {
+    const seconds = this.networkSettings.config.holdOpenSec ?? 0;
+    if (!seconds) return;
+    const session = this.session;
+    const deadline = Date.now() + seconds * 1000;
+    log.info(`HOLD_OPEN: this side stays reachable for ${formatDuration(seconds)} while the peer injects the ANSWER.`);
+
+    this.#holdTimer = setInterval(async () => {
+      if (session !== this.session || !WAITING_PHASES.has(this.phase)) {
+        this.#stopHoldOpen();
+        return;
+      }
+      if (Date.now() >= deadline) {
+        this.#stopHoldOpen();
+        log.warn(`HOLD_OPEN ended after ${formatDuration(seconds)}. If the peer injects the ANSWER now, the link may need TURN. Generate new payloads if it fails.`, { notify: false });
+        if (session.pc.connectionState === 'failed') this.#onPeerState(session, 'failed');
+        return;
+      }
+      await session.holdOpen().catch(() => {});
+    }, HOLD_OPEN_TICK_MS);
+  }
+
+  #stopHoldOpen() {
+    clearInterval(this.#holdTimer);
+    this.#holdTimer = null;
   }
 
   // The peer stopped answering. Short outages (Wi-Fi blip, same IP) heal by themselves within
@@ -274,11 +309,17 @@ export class Connection extends EventTarget {
     switch (state) {
       case 'connecting':
         // The offerer can see early checks from the peer before it has the answer; stay quiet then.
-        if (this.phase === 'awaiting-peer') this.#setPhase('connecting');
-        if (this.phase === 'connecting') log.info('ICE: checking candidate pairs...');
+        // HOLD_OPEN restarts checks every ~20 s: say it once, not every round.
+        if (this.phase === 'awaiting-peer') {
+          this.#setPhase('connecting');
+          log.info('ICE: checking candidate pairs...');
+        } else if (this.phase === 'connecting' && !this.#holdTimer) {
+          log.info('ICE: checking candidate pairs...');
+        }
         break;
       case 'connected': {
         const recovered = this.phase === 'reconnecting';
+        this.#stopHoldOpen();
         this.#endRecovery();
         this.#setPhase('connected');
         log.ok(recovered ? 'Link restored.' : 'TUNNEL ESTABLISHED. Encrypted with DTLS.');
@@ -296,6 +337,8 @@ export class Connection extends EventTarget {
           clearTimeout(this.#restartTimer);
           log.info('Attempting ICE restart over the control channel...');
           session.restartIce();
+        } else if (this.#holdTimer && session.pc.sctp?.transport.state !== 'failed') {
+          // ICE gave up, but HOLD_OPEN starts the checks again: the peer may still be pasting.
         } else {
           this.#setPhase('failed');
           this.#emit('ended', { reason: 'failed' });
@@ -356,4 +399,8 @@ function formatCounts(counts) {
 
 function formatCandidates(sdp) {
   return `candidates: ${formatCounts(countCandidates(sdp))}`;
+}
+
+function formatDuration(seconds) {
+  return seconds < 60 ? `${seconds} s` : `${seconds / 60} min`;
 }

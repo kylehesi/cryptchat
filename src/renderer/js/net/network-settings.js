@@ -5,7 +5,7 @@
 
 export class NetworkSettings extends EventTarget {
   /** @type {{ stunUrls: string[], turn: { urls: string[], username: string, credential: string },
-   *           cloudflare: { keyId: string, apiToken: string }, relayOnly: boolean } | null} */
+   *           cloudflare: { keyId: string, apiToken: string }, relayOnly: boolean, holdOpenSec: number } | null} */
   config = null;
   defaults = null;
 

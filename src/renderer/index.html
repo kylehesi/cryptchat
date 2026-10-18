@@ -38,6 +38,9 @@
         <header class="panel-header">
           <h2 class="panel-title" id="h-connection"><span class="tag">[ SYS ]</span> ~ CONNECTION_MATRIX</h2>
           <span class="header-actions">
+            <button class="btn btn-header btn-nat" id="btn-nat-check" type="button"
+                    title="Check whether your network needs a TURN relay, before exchanging payloads"
+                    aria-label="Check whether your network needs TURN">[ NAT_CHECK ]</button>
             <button class="btn btn-header" id="btn-help" type="button"
                     title="How to use" aria-label="How to use">[ ? ]</button>
             <button class="btn btn-header" id="btn-settings" type="button"
@@ -59,6 +62,8 @@
             <div class="payload-box">
               <textarea id="remote-payload" class="payload" spellcheck="false"
                         placeholder="[ INJECT REMOTE HASH HERE ]"></textarea>
+              <button class="btn btn-tiny payload-clear" id="btn-remote-clear" type="button"
+                      title="Clear the pasted payload" aria-label="Clear the pasted payload">[×]</button>
             </div>
             <button class="btn" id="btn-connect" type="button">EXECUTE_CONNECT</button>
           </div>
@@ -246,6 +251,15 @@
                  placeholder="> TURN_PASS" aria-label="TURN password">
         </div>
         <label class="check"><input type="checkbox" id="net-relay-only"> RELAY_ONLY (hide my IP, needs TURN)</label>
+        <label class="field-label" for="net-hold-open">HOLD_OPEN (after you answer, stay reachable while the peer pastes it):</label>
+        <select id="net-hold-open" class="select">
+          <option value="0">OFF</option>
+          <option value="30">30 s</option>
+          <option value="60">1 min</option>
+          <option value="120">2 min (default)</option>
+          <option value="180">3 min</option>
+          <option value="300">5 min</option>
+        </select>
         <div class="settings-row">
           <button class="btn" id="btn-net-test" type="button">TEST_TURN</button>
           <button class="btn" id="btn-net-defaults" type="button">DEFAULTS</button>
@@ -310,8 +324,12 @@
       <section>
         <h3>07 // TROUBLESHOOT</h3>
         <ul>
+          <li><b>[ NAT_CHECK ]</b> (top left) tells you before connecting whether your network needs TURN.
+              Green: direct should work. Yellow: unclear, or TURN needed and set up. Red: set up TURN first.</li>
           <li><b>"ICE failed":</b> your networks cannot reach each other directly (e.g. mobile/CGNAT).
               One of you needs a TURN relay: <kbd>[ ⚙ ]</kbd> → NETWORK.</li>
+          <li><b>HOLD_OPEN</b> (<kbd>[ ⚙ ]</kbd> → NETWORK): after you send your ANSWER, you stay reachable for this long
+              (default 2 min). The peer should inject it before then, or the link may need TURN.</li>
           <li><b>RELAY_ONLY</b> hides your IP from the peer (needs TURN).</li>
           <li><b>"DTLS failed":</b> the payloads were altered or mixed up. Start over.</li>
         </ul>
