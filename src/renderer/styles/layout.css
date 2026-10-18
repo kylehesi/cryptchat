@@ -25,8 +25,7 @@ body {
 /* Two columns: connection + chat on the left, A/V + log on the right. */
 .app {
   display: grid;
-  /* 480px fits "CONNECTION_MATRIX" + [ NAT_CHECK ] [ ? ] [ ⚙ ] on one line; extra width goes right */
-  grid-template-columns: 480px 1fr;
+  grid-template-columns: 352px 1fr; /* fits "CONNECTION_MATRIX" + [ ? ] + [ ⚙ ] on one line; extra width goes right */
   gap: 6px;
   height: 100vh;
   padding: 3px;
@@ -152,6 +151,16 @@ body {
   flex: 1 1 auto;
   min-width: 0;
   text-overflow: ellipsis; /* long Windows device names; the full name is in the tooltip */
+}
+
+/* GENERATE_PAYLOAD / TERMINATE_LINK takes the room, NAT_CHECK sits next to it. */
+.payload-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.payload-actions #btn-generate {
+  flex: 1 1 auto;
 }
 
 .btn-row {

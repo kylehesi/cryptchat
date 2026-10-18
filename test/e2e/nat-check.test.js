@@ -64,7 +64,7 @@ e2e('nat check', async (t) => {
   const verdictLine = () => t.js(a, `[...document.querySelectorAll('#kernel-log .log-line')].map((l) => l.textContent).find((l) => /NAT_CHECK \\(\\d+ ms\\)/.test(l)) ?? ''`);
   const buttonClass = () => t.js(a, `['is-ok', 'is-warn', 'is-err'].find((c) => document.getElementById('btn-nat-check').classList.contains(c)) ?? ''`);
 
-  t.ok(await t.js(a, `(() => { const h = document.querySelector('.panel-connection .panel-header'); return h.scrollWidth <= h.clientWidth; })()`), 'the header fits with [ NAT_CHECK ]');
+  t.ok(await t.js(a, `[...document.querySelectorAll('.payload-actions .btn')].every((b) => b.scrollWidth <= b.clientWidth)`), 'GENERATE_PAYLOAD and NAT_CHECK fit side by side');
 
   await t.click(a, 'btn-nat-check');
   t.ok(await t.js(a, `document.getElementById('btn-nat-check').disabled`), 'the button is busy while checking');

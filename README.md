@@ -49,7 +49,7 @@ two PCs. The in-app **[ ? ]** button has the full guide.
 
 Most home networks connect directly. If both sides are behind strict NATs (mobile data, some
 ISPs' CGNAT), a **TURN relay** is needed. Add a Cloudflare TURN key or your own coturn server
-under **[ ⚙ ] → NETWORK**. Not sure? Press **[ NAT_CHECK ]** before exchanging payloads: it tells
+under **[ ⚙ ] → NETWORK**. Not sure? Press **NAT_CHECK** before exchanging payloads: it tells
 you whether your network can connect directly or needs TURN. See [docs/TURN.md](docs/TURN.md). Traffic stays end-to-end encrypted
 through the relay.
 

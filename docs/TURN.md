@@ -10,7 +10,7 @@ CryptChat ships **no TURN credentials**. There are two options:
 - **Cloudflare TURN** (easiest, no server to run). See below.
 - **Your own coturn server** on a small VPS (€4–5/month is plenty for a few people), sections 1–5.
 
-Not sure whether you need it? **[ NAT_CHECK ]** (top left of the app) asks two STUN servers for
+Not sure whether you need it? **NAT_CHECK** (next to GENERATE_PAYLOAD) asks two STUN servers for
 your public address: the same public port for both (cone NAT) means a direct link should work,
 a different port per server (symmetric NAT) or no answer at all (UDP blocked) means TURN.
 Even between two cone NATs, the peer must inject the ANSWER within **HOLD_OPEN** (Settings →

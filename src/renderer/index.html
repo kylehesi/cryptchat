@@ -38,9 +38,6 @@
         <header class="panel-header">
           <h2 class="panel-title" id="h-connection"><span class="tag">[ SYS ]</span> ~ CONNECTION_MATRIX</h2>
           <span class="header-actions">
-            <button class="btn btn-header btn-nat" id="btn-nat-check" type="button"
-                    title="Check whether your network needs a TURN relay, before exchanging payloads"
-                    aria-label="Check whether your network needs TURN">[ NAT_CHECK ]</button>
             <button class="btn btn-header" id="btn-help" type="button"
                     title="How to use" aria-label="How to use">[ ? ]</button>
             <button class="btn btn-header" id="btn-settings" type="button"
@@ -55,7 +52,12 @@
             <textarea id="local-payload" class="payload" readonly spellcheck="false"
                       placeholder="[ WAITING FOR GENERATION ]"></textarea>
           </div>
-          <button class="btn" id="btn-generate" type="button">GENERATE_PAYLOAD</button>
+          <div class="payload-actions">
+            <button class="btn" id="btn-generate" type="button">GENERATE_PAYLOAD</button>
+            <button class="btn btn-nat" id="btn-nat-check" type="button"
+                    title="Check whether your network needs a TURN relay, before exchanging payloads"
+                    aria-label="Check whether your network needs TURN">NAT_CHECK</button>
+          </div>
 
           <div class="stack" id="remote-section">
             <label class="field-label gap-top" for="remote-payload">2. REMOTE_PAYLOAD (INJECT):</label>
@@ -324,7 +326,7 @@
       <section>
         <h3>07 // TROUBLESHOOT</h3>
         <ul>
-          <li><b>[ NAT_CHECK ]</b> (top left) tells you before connecting whether your network needs TURN.
+          <li><b>NAT_CHECK</b> (next to GENERATE_PAYLOAD) tells you before connecting whether your network needs TURN.
               Green: direct should work. Yellow: unclear, or TURN needed and set up. Red: set up TURN first.</li>
           <li><b>"ICE failed":</b> your networks cannot reach each other directly (e.g. mobile/CGNAT).
               One of you needs a TURN relay: <kbd>[ ⚙ ]</kbd> → NETWORK.</li>

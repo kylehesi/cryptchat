@@ -146,7 +146,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 
 ## Phase 9 — Polish
 - [x] Final window size: 978×563 content area, minimum size enforced, no scroll
-      (v0.2.2: default 1160×700, minimum 1106×563, size and position remembered)
+      (v0.2.2: default 1160×700, size and position remembered; minimum 1100×660, 978×563 on small screens)
 - [ ] Error messages for every failure path (no mic, permission denied, bad payload, ICE failed)
 - [ ] Keyboard shortcuts (e.g. mic toggle)
 - [ ] README: screenshots (honest security section and usage guide are done)

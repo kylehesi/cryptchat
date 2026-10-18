@@ -5,12 +5,25 @@ bumps PATCH, and a bigger milestone bumps MINOR. Dates are YYYY-MM-DD.
 
 | Version | Date | In one line |
 |---|---|---|
-| [**v0.2.2**](#v022--direct-links-through-nats) | 2026-10-18 | NAT_CHECK, HOLD_OPEN for direct links between home NATs, bigger window |
+| [**v0.2.3**](#v023--layout-polish) | 2026-10-18 | NAT_CHECK next to GENERATE_PAYLOAD, narrow left column again, larger minimum window |
+| [v0.2.2](#v022--direct-links-through-nats) | 2026-10-18 | NAT_CHECK, HOLD_OPEN for direct links between home NATs, bigger window |
 | [v0.2.1](#v021--privacy-mode) | 2026-10-17 | Hide IPs and payloads on screen (for streaming) |
 | [v0.2.0](#v020--quality-of-life) | 2026-10-16 | Speaker choice, volume sliders, notifications with sounds, switch the shared screen live |
 | [v0.1.2](#v012--test-suite) | 2026-10-16 | Test suite + CI; two bugs fixed (lost goodbye, mic re-opening) |
 | [v0.1.1](#v011--sharper-screen-share) | 2026-10-15 | AV1 screen share: twice the frame rate on slow links; live stats |
 | [v0.1.0](#v010--first-pre-release) | 2026-10-15 | First pre-release: calls, chat, screen, files, TURN, verification |
+
+---
+
+## v0.2.3 — Layout polish
+
+*2026-10-18*
+
+**Changed**
+- **NAT_CHECK** moved from the CONNECTION_MATRIX header to the button row, next to
+  GENERATE_PAYLOAD. The left column is back to its narrow 352px.
+- The window can no longer be shrunk below 1100×660 (it opens at 1160×700). Only screens too
+  small for that go lower, never below the old compact 978×563.
 
 ---
 

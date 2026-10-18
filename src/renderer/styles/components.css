@@ -880,7 +880,7 @@
   background: var(--text-faint);
 }
 
-/* [ NAT_CHECK ]: colored by the last result (details in its tooltip and KERNEL_LOG). */
+/* NAT_CHECK: colored by the last result (details in its tooltip and KERNEL_LOG). */
 .btn-nat.is-busy:disabled {
   color: var(--text-dim);
   cursor: progress;

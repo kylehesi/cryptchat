@@ -1,7 +1,7 @@
 import { log } from '../core/logger.js';
 import { checkNat } from '../net/nat-check.js';
 
-/** [ NAT_CHECK ] in the CONNECTION_MATRIX header: does this network need TURN? */
+/** NAT_CHECK next to GENERATE_PAYLOAD: does this network need TURN? */
 export function mountNatCheck({ networkSettings, button }) {
   button.addEventListener('click', async () => {
     const config = networkSettings.config;
