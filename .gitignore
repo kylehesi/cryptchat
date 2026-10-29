@@ -4,3 +4,7 @@ out/
 *.log
 .DS_Store
 Thumbs.db
+
+# Internal working notes, kept locally only
+docs/TODO.md
+docs/ROADMAP.md

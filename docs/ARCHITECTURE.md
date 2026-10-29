@@ -69,7 +69,8 @@ cryptchat/
 ├─ README.md
 ├─ docs/
 │  ├─ ARCHITECTURE.md           (this file)
-│  └─ ROADMAP.md                phased pipeline + checkboxes
+│  ├─ RELEASING.md              building and publishing the installer
+│  └─ TURN.md                   when a relay is needed, and how to set one up
 └─ src/
    ├─ main/
    │  ├─ main.js
@@ -170,7 +171,7 @@ crash, and **no dummy black canvas track**. Stopping is `replaceTrack(null)`.
    needed. Room-code signaling (v2) would remove this limit.
 
 Signaling sits behind a small interface (`send(msg)`, `onMessage`), so a "room code" transport can
-be added later without touching `PeerSession`. See the open decision in ROADMAP.
+be added later without touching `PeerSession`. Planned: contacts that meet over public Nostr relays.
 
 ### 5.4 Payload format
 

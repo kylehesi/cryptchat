@@ -5,7 +5,8 @@ bumps PATCH, and a bigger milestone bumps MINOR. Dates are YYYY-MM-DD.
 
 | Version | Date | In one line |
 |---|---|---|
-| [**v0.2.4**](#v024--release-polish) | 2026-10-29 | New README, MIT license, COPY_LOG, clearer errors, no mic at startup |
+| [**v0.2.5**](#v025--tidy-repository) | 2026-10-29 | Internal working notes out of the repository |
+| [v0.2.4](#v024--release-polish) | 2026-10-29 | New README, MIT license, COPY_LOG, clearer errors, no mic at startup |
 | [v0.2.3](#v023--layout-polish) | 2026-10-18 | NAT_CHECK next to GENERATE_PAYLOAD, narrow left column again, larger minimum window |
 | [v0.2.2](#v022--direct-links-through-nats) | 2026-10-18 | NAT_CHECK, HOLD_OPEN for direct links between home NATs, bigger window |
 | [v0.2.1](#v021--privacy-mode) | 2026-10-17 | Hide IPs and payloads on screen (for streaming) |
@@ -13,6 +14,19 @@ bumps PATCH, and a bigger milestone bumps MINOR. Dates are YYYY-MM-DD.
 | [v0.1.2](#v012--test-suite) | 2026-10-16 | Test suite + CI; two bugs fixed (lost goodbye, mic re-opening) |
 | [v0.1.1](#v011--sharper-screen-share) | 2026-10-15 | AV1 screen share: twice the frame rate on slow links; live stats |
 | [v0.1.0](#v010--first-pre-release) | 2026-10-15 | First pre-release: calls, chat, screen, files, TURN, verification |
+
+---
+
+## v0.2.5 — Tidy repository
+
+*2026-10-29*
+
+**Changed**
+- The internal working notes (`docs/TODO.md`, `docs/ROADMAP.md`) are no longer part of the
+  repository. Known bugs and planned features move to
+  [GitHub Issues](https://github.com/kylehesi/cryptchat/issues); the README links there.
+- Links to the removed notes are fixed in the README, ARCHITECTURE.md and the pull request
+  template.
 
 ---
 
@@ -176,7 +190,7 @@ bumps PATCH, and a bigger milestone bumps MINOR. Dates are YYYY-MM-DD.
   two-window end-to-end tests (connect, chat, renegotiation, voice, verification, files,
   settings), plus local-only screen, system-audio and TURN tests. GitHub Actions runs them on
   every push and pull request.
-- [docs/TODO.md](docs/TODO.md): the ordered backlog.
+- An ordered backlog (`docs/TODO.md`, kept out of the repository since v0.2.5).
 
 **Fixed**
 - TERMINATE_LINK during a busy file transfer could drop the goodbye message, so the peer only

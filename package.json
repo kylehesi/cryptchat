@@ -1,7 +1,7 @@
 {
   "name": "cryptchat",
   "productName": "CryptChat",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Peer-to-peer voice, screen sharing, file transfer and chat for Windows. No accounts, no backend.",
   "author": "kylehesi",
   "homepage": "https://github.com/kylehesi/cryptchat",

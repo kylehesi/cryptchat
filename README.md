@@ -90,7 +90,7 @@ the test suite, `npm run dist` builds the installer ([RELEASING.md](docs/RELEASI
 | [CHANGELOG.md](CHANGELOG.md) | What changed in each version |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How it works inside: WebRTC, signaling, audio, security model |
 | [docs/TURN.md](docs/TURN.md) | When you need a TURN relay, and how to set one up |
-| [docs/TODO.md](docs/TODO.md) | What is planned next |
+| [Issues](https://github.com/kylehesi/cryptchat/issues) | Known bugs and planned features |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to report bugs and send changes |
 
 ## License
