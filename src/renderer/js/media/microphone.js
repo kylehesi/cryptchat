@@ -1,7 +1,9 @@
 // Microphone: device list, selection, DSP options, and the live capture track.
 // Never touches the DOM.
 //
-// The mic is only open while a call is running (acquire/release); idle means no capture.
+// The mic is only open while a call is running (acquire/release); idle means no capture, not
+// even at startup: device names are readable without capturing, because the main process grants
+// our own page the media permission (see hardenSession in main.js).
 //
 // Events (CustomEvent.detail):
 //   'devices'  { devices: [{ id, label }] }  input device list changed
@@ -17,6 +19,7 @@ export class Microphone extends EventTarget {
   /** @type {{ id: string, label: string }[]} */
   devices = [];
   deviceId = 'default';
+  labelsHidden = false; // true if the system hid device names (then the first call fills them in)
   processing = { ...DEFAULT_PROCESSING };
   /** @type {MediaStreamTrack | null} */
   track = null;
@@ -32,18 +35,15 @@ export class Microphone extends EventTarget {
     navigator.mediaDevices.addEventListener('devicechange', () => this.refreshDevices());
   }
 
-  /** Device labels stay empty until capture has been allowed once, so open and close the mic briefly. */
   async init() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    stream.getTracks().forEach((track) => track.stop());
     await this.refreshDevices();
   }
 
   async refreshDevices() {
     const all = await navigator.mediaDevices.enumerateDevices();
-    this.devices = all
-      .filter((device) => device.kind === 'audioinput')
-      .map((device) => ({ id: device.deviceId, label: device.label || 'Microphone' }));
+    const inputs = all.filter((device) => device.kind === 'audioinput');
+    this.labelsHidden = inputs.some((device) => !device.label);
+    this.devices = inputs.map((device) => ({ id: device.deviceId, label: device.label || 'Microphone' }));
 
     if (this.devices.length && !this.devices.some((device) => device.id === this.deviceId)) {
       const fallback = this.devices.find((device) => device.id === 'default') ?? this.devices[0];
@@ -105,7 +105,7 @@ export class Microphone extends EventTarget {
     });
     const track = stream.getAudioTracks()[0];
     track.addEventListener('ended', () => {
-      if (track === this.track) log.warn('Microphone stopped (device unplugged?).');
+      if (track === this.track) log.warn('Microphone stopped (unplugged, or taken over by another app). Pick a mic in MIC_SRC to continue.');
     });
     return track;
   }

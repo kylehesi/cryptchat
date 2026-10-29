@@ -10,7 +10,7 @@
 - Small, auditable codebase: Electron + WebRTC + vanilla JS (ES modules). No UI framework.
 - Terminal aesthetic: black background, `#00ff00`, monospace, English "system" vocabulary.
 - Windows only for v1.
-- License: GPL-3.0.
+- License: MIT (GPL-3.0 up to v0.2.3).
 
 ### Non-goals (v1)
 
@@ -54,13 +54,18 @@ The renderer is served from a privileged custom scheme `app://cryptchat` (not `f
 gives it a secure origin and clean ES-module loading, and lets permission handlers grant `media`
 only to our own origin. Every other permission is denied.
 
+One instance per profile (`app.requestSingleInstanceLock()`, which is tied to the userData
+folder): a second launch quits at once and brings the running window to the front, so two
+processes never write the same settings and storage. `--profile=x` uses its own userData, so
+it still runs side by side (that is how two copies connect on one PC during development).
+
 ## 4. Directory layout
 
 ```
 cryptchat/
 ├─ package.json
 ├─ electron-builder.yml
-├─ LICENSE                      GPL-3.0
+├─ LICENSE                      MIT
 ├─ README.md
 ├─ docs/
 │  ├─ ARCHITECTURE.md           (this file)
@@ -263,6 +268,10 @@ Each side takes both DTLS fingerprints from the SDP (`a=fingerprint`), sorts the
   Opus is set to stereo with a higher bitrate.
 - Toggle mic = `track.enabled = false`. The track keeps running, so unmuting is instant.
 - Device hot-swap via `devicechange` + `replaceTrack`.
+- Captured only during a call, never at startup. Chromium normally hides device names until
+  capture is allowed, but our permission check handler already grants `media` to our own
+  origin, so `enumerateDevices()` returns the names without opening the mic. If a system hides
+  them anyway (`Microphone.labelsHidden`), the lists refresh once the first call captures.
 
 ### System audio (replaces the VB-Cable setup)
 
@@ -399,6 +408,9 @@ sender                                   receiver
     other internet download.
   - The free disk space is checked before accepting (keeping a 256 MB margin).
   - On cancel, link loss, window reload/crash or app quit, `.part` files are deleted.
+  - Disk errors become short reasons without paths (`friendlyFsError`): Node's own text has
+    the full path with the Windows user name, and the reason is also sent to the peer.
+    Tested with a faked full disk and a refused folder (`test/e2e/file-errors.test.js`).
 - **Integrity:** DTLS authenticates and encrypts every chunk, and the channel is reliable and
   ordered. The exact byte count is checked before the rename. No extra hash is needed.
 - **UI:** transfers are lines in the chat (`[ + ]` button or drag & drop). Programs and scripts
@@ -436,11 +448,11 @@ Same 4-panel layout as the original:
 ```
 ┌ CONNECTION_MATRIX ─────────┐┌ A.V._INTERFACE ──────────────────────┐
 │ 1. LOCAL_PAYLOAD           ││ [L] LOCAL_USR  🎙🎧  [R] REMOTE_USR 🎙🎧│
-│ [GENERATE_PAYLOAD]         ││ MIC_SRC [............]                │
+│ [GENERATE_PAYLOAD][NAT]    ││ MIC_SRC [............]                │
 │ 2. REMOTE_PAYLOAD          ││ [TOGGLE_MIC][DEAFEN][SHARE_SCR]       │
 │ [EXECUTE_CONNECT]          ││ ┌ remote screen ──────────── [PIP] ┐  │
 ├ ENCRYPTED_CHAT ────────────┤│ └──────────────────────────────────┘  │
-│ > SET ALIAS                │├ KERNEL_LOG ───────────────────────────┤
+│ > SET ALIAS                │├ KERNEL_LOG ──── LINK: … [COPY_LOG] ───┤
 │ [ messages ]               ││ [time] ...                            │
 │ > TYPE MESSAGE [SEND]      ││                                       │
 └────────────────────────────┘└───────────────────────────────────────┘
@@ -449,4 +461,12 @@ Same 4-panel layout as the original:
 - `<html lang="en">`. This fixes the `PİP` dotted-İ bug that `text-transform: uppercase`
   produced under a Turkish system locale.
 - All strings, including logs, are in English.
-- Colors live in CSS custom properties in `theme.css`. Window size will be tuned at the end.
+- Colors live in CSS custom properties in `theme.css`.
+- Window: opens at 1160×700 content, minimum 1100×660 (978×563 on small screens), size and
+  position remembered (`src/main/window-state.js`). The left column stays 352px.
+- **COPY_LOG** (`core/log-report.js`): the log as text for bug reports. Masking does not depend
+  on HIDE_IP_AND_PAYLOAD: IPs, STUN/TURN hosts and payloads by pattern, and personal details by
+  marking. Modules wrap file names, window titles and aliases in `secret()` when they log;
+  KERNEL_LOG shows them, COPY_LOG writes `[hidden]`. Marking beats pattern matching here: a
+  one-letter alias would otherwise blank every matching letter. The newest lines are kept if
+  the log is over the 64 KiB clipboard limit.

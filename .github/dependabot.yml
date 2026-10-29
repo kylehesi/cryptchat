@@ -1,0 +1,26 @@
+# Dependabot opens pull requests when a dependency has an update (security fixes first).
+# Electron ships security fixes every few weeks, and an outdated Electron is the app's
+# biggest risk, so npm is checked weekly. Each PR runs the test workflow like any other.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Minor and patch updates of the build tools in one PR; Electron always on its own,
+      # so a new Electron version can be tested (and reverted) separately.
+      tooling:
+        patterns: ['*']
+        exclude-patterns: ['electron']
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']

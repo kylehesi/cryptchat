@@ -1,7 +1,7 @@
 {
   "name": "cryptchat",
   "productName": "CryptChat",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Peer-to-peer voice, screen sharing, file transfer and chat for Windows. No accounts, no backend.",
   "author": "kylehesi",
   "homepage": "https://github.com/kylehesi/cryptchat",
@@ -14,7 +14,7 @@
   },
   "main": "src/main/main.js",
   "private": true,
-  "license": "GPL-3.0-only",
+  "license": "MIT",
   "scripts": {
     "start": "electron .",
     "start:b": "electron . --profile=b",

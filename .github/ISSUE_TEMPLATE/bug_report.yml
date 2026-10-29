@@ -6,7 +6,8 @@ body:
     attributes:
       value: |
         Thanks for reporting! **Security problems go to SECURITY.md, not here.**
-        Please remove IP addresses and payload codes from logs before posting.
+        For the log, press **[ COPY_LOG ]** in the KERNEL_LOG header and paste it below: IP addresses,
+        server hosts, payloads, file names and window titles are already masked.
   - type: textarea
     id: what
     attributes:
@@ -33,7 +34,7 @@ body:
     id: log
     attributes:
       label: KERNEL_LOG
-      description: Copy the relevant lines from the KERNEL_LOG panel (remove IPs and payloads).
+      description: Press [ COPY_LOG ] in the KERNEL_LOG header and paste here (personal details are masked). Read it once before posting.
       render: text
   - type: input
     id: version

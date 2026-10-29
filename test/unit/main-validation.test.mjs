@@ -58,3 +58,15 @@ test('Cloudflare response: TURN only, port 53 dropped, credentials required', ()
   assert.deepEqual(result, [{ urls: ['turn:turn.cloudflare.com:3478?transport=udp', 'turns:turn.cloudflare.com:5349?transport=tcp'], username: 'u', credential: 'c' }]);
   assert.deepEqual(sanitize(null), []);
 });
+
+test('file system errors become short reasons without paths', () => {
+  const { friendlyFsError } = require('../../src/main/file-receive.js');
+  const withPath = (code) => Object.assign(new Error(`${code}: x, open 'C:\\Users\\someone\\Downloads\\CryptChat\\a.part'`), { code });
+  assert.equal(friendlyFsError(withPath('ENOSPC')), 'Not enough free disk space.');
+  assert.match(friendlyFsError(withPath('EPERM')), /^Windows denied writing to Downloads\\CryptChat/);
+  assert.equal(friendlyFsError(withPath('EXDEV')), 'Could not write the file (EXDEV).', 'unknown codes: just the code');
+  for (const code of ['ENOSPC', 'EACCES', 'EPERM', 'EBUSY', 'ENOENT', 'EROFS', 'EXDEV']) {
+    assert.ok(!friendlyFsError(withPath(code)).includes('someone'), `${code}: no user name`);
+  }
+  assert.equal(friendlyFsError(new Error('Not enough free disk space.')), 'Not enough free disk space.', 'our own messages pass through');
+});

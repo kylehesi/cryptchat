@@ -24,6 +24,28 @@ const RESERVED_NAME = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i;
 const UNSAFE_CHARS = /[\u0000-\u001F\u007F<>:"|?*‎‏‪-‮⁦-⁩]/g;
 const MARK_OF_THE_WEB = '[ZoneTransfer]\r\nZoneId=3\r\n';
 
+/**
+ * A file system error as a short reason without paths. Node's own text contains the full path
+ * (with the Windows user name), and receive errors are also sent to the peer as the reason.
+ */
+function friendlyFsError(error) {
+  switch (error?.code) {
+    case 'ENOSPC':
+      return 'Not enough free disk space.';
+    case 'EACCES':
+    case 'EPERM':
+      return 'Windows denied writing to Downloads\\CryptChat (folder permissions, or an antivirus blocking it).';
+    case 'EBUSY':
+      return 'The file is locked by another program.';
+    case 'ENOENT':
+      return 'The Downloads\\CryptChat folder is missing or unreachable.';
+    case 'EROFS':
+      return 'The Downloads folder is on a read-only drive.';
+    default:
+      return error?.code ? `Could not write the file (${error.code}).` : String(error?.message ?? error);
+  }
+}
+
 /** Reduces a peer-supplied name to a plain, harmless Windows file name. */
 function safeFileName(raw) {
   let name = String(raw ?? '').split(/[\\/]/).pop();
@@ -85,7 +107,7 @@ function registerFileReceive({ isOwnOrigin }) {
         return await fn(event, ...args);
       } catch (error) {
         if (typeof args[0] === 'string') abort(args[0]);
-        return { ok: false, error: error.message };
+        return { ok: false, error: friendlyFsError(error) };
       }
     });
   };
@@ -102,7 +124,14 @@ function registerFileReceive({ isOwnOrigin }) {
 
     const { finalPath, partPath, stream } = await reserve(dir, safeFileName(rawName));
     const owner = event.sender;
-    active.set(id, { stream, partPath, finalPath, expected: size, written: 0, owner });
+    active.set(id, { stream, partPath, finalPath, expected: size, written: 0, owner, error: null });
+    // A write can fail later (disk full, drive gone). Today every write is awaited (drain or
+    // close), which catches it; this listener keeps it that way if the flow ever changes, since an
+    // unheard 'error' event would be an uncaught main-process exception (an error dialog).
+    stream.on('error', (error) => {
+      const entry = active.get(id);
+      if (entry) entry.error = error;
+    });
     // If the window closes or crashes mid-transfer, do not leave .part files behind.
     // One listener per window (not per transfer), so long sessions do not pile them up.
     if (!watchedOwners.has(owner)) {
@@ -124,6 +153,7 @@ function registerFileReceive({ isOwnOrigin }) {
     if (!entry) throw new Error('Unknown transfer.');
     if (!(chunk instanceof Uint8Array)) throw new Error('Invalid chunk.');
     if (entry.written + chunk.byteLength > entry.expected) throw new Error('Peer sent more data than announced.');
+    if (entry.error) throw entry.error; // the stream is gone: a write would wait for 'drain' forever
 
     entry.written += chunk.byteLength;
     if (!entry.stream.write(Buffer.from(chunk.buffer, chunk.byteOffset, chunk.byteLength))) {
@@ -136,9 +166,11 @@ function registerFileReceive({ isOwnOrigin }) {
     const entry = active.get(id);
     if (!entry) throw new Error('Unknown transfer.');
     if (entry.written !== entry.expected) throw new Error(`Size mismatch: got ${entry.written} of ${entry.expected} bytes.`);
+    if (entry.error) throw entry.error; // already closed by the error: 'close' would never come
 
     entry.stream.end();
     await once(entry.stream, 'close');
+    if (entry.error) throw entry.error; // the last buffered write failed
     active.delete(id);
 
     // Someone may have created a file with our final name meanwhile; never overwrite it.
@@ -166,4 +198,4 @@ function registerFileReceive({ isOwnOrigin }) {
   });
 }
 
-module.exports = { registerFileReceive, safeFileName };
+module.exports = { registerFileReceive, safeFileName, friendlyFsError };

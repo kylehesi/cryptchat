@@ -1,5 +1,8 @@
 // A.V._INTERFACE: MIC_SRC / AUDIO_OUT selectors, TOGGLE_MIC / DEAFEN, peer card icons, speaking glow.
 
+import { log } from '../core/logger.js';
+import { describeMicError } from '../media/device-errors.js';
+
 export function mountAvPanel({ voice, microphone, speakers, connection, micSelect, outSelect, voiceVolume, micButton, deafenButton, localCard, remoteCard }) {
   // Peer voice volume, on the remote card (one card per peer later, one slider each).
   bindVolume(voiceVolume, voice.volume, 'VOICE_VOL', (value) => voice.setVolume(value));
@@ -9,7 +12,10 @@ export function mountAvPanel({ voice, microphone, speakers, connection, micSelec
 
   micButton.addEventListener('click', () => voice.toggleMic());
   deafenButton.addEventListener('click', () => voice.toggleDeafen());
-  micSelect.addEventListener('change', () => microphone.setDevice(micSelect.value));
+  // Mid-call the new mic is captured right away; if that fails the old one keeps running.
+  micSelect.addEventListener('change', () => microphone.setDevice(micSelect.value).catch((error) => {
+    log.err(`Could not switch microphone: ${describeMicError(error)}. Keeping the previous one.`);
+  }));
   outSelect.addEventListener('change', () => speakers.setDevice(outSelect.value));
 
   microphone.addEventListener('devices', () => fillSelect(micSelect, microphone.devices, microphone.deviceId));

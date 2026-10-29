@@ -1,4 +1,4 @@
-import { log } from '../core/logger.js';
+import { log, secret } from '../core/logger.js';
 import { appendToLog } from './scroll-log.js';
 
 export const CHAT_MAX_LINES = 500;
@@ -20,7 +20,7 @@ export function mountChatPanel({ chat, aliasInput, chatLog, form, messageInput, 
   aliasInput.addEventListener('change', () => {
     const alias = chat.setAlias(aliasInput.value);
     aliasInput.value = alias;
-    log.info(alias ? `Alias set: ${alias}` : 'Alias cleared.');
+    log.info(alias ? `Alias set: ${secret(alias)}` : 'Alias cleared.');
   });
   aliasInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') aliasInput.blur(); // blur fires 'change'

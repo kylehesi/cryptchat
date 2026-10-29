@@ -14,6 +14,7 @@ import { mountAudioSettings } from './ui/audio-settings.js';
 import { mountAvPanel } from './ui/av-panel.js';
 import { mountChatPanel } from './ui/chat-panel.js';
 import { mountConnectionPanel } from './ui/connection-panel.js';
+import { mountCopyLog } from './ui/copy-log-button.js';
 import { mountLinkStatus } from './ui/link-status.js';
 import { mountLogPanel } from './ui/log-panel.js';
 import { Privacy } from './ui/privacy.js';
@@ -30,6 +31,7 @@ const $ = (id) => document.getElementById(id);
 
 const privacy = new Privacy();
 mountLogPanel($('kernel-log'), privacy);
+mountCopyLog({ button: $('btn-copy-log') });
 
 const hideSensitive = $('hide-sensitive');
 hideSensitive.checked = privacy.hidden;
@@ -217,8 +219,13 @@ networkSettings
   })
   .catch((error) => log.err(`Could not load network settings: ${error.message}`));
 
+// Lists devices without opening the mic (it only opens during a call). Should the system hide the
+// device names anyway, the first call's capture reveals them: refresh both lists then.
 microphone
   .init()
-  .then(() => speakers.refreshDevices()) // output names also need the permission the mic probe grants
+  .then(() => speakers.refreshDevices())
   .then(() => log.info(`Audio subsystem: ${microphone.devices.length} input / ${speakers.devices.length} output device(s) found.`))
-  .catch((error) => log.err(`Microphone access failed (${error.name}). Voice will be listen-only.`));
+  .catch((error) => log.err(`Could not list audio devices (${error.name}).`));
+microphone.addEventListener('track', ({ detail }) => {
+  if (detail.track && microphone.labelsHidden) microphone.refreshDevices().then(() => speakers.refreshDevices());
+});

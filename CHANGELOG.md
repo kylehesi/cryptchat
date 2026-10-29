@@ -5,13 +5,58 @@ bumps PATCH, and a bigger milestone bumps MINOR. Dates are YYYY-MM-DD.
 
 | Version | Date | In one line |
 |---|---|---|
-| [**v0.2.3**](#v023--layout-polish) | 2026-10-18 | NAT_CHECK next to GENERATE_PAYLOAD, narrow left column again, larger minimum window |
+| [**v0.2.4**](#v024--release-polish) | 2026-10-29 | New README, MIT license, COPY_LOG, clearer errors, no mic at startup |
+| [v0.2.3](#v023--layout-polish) | 2026-10-18 | NAT_CHECK next to GENERATE_PAYLOAD, narrow left column again, larger minimum window |
 | [v0.2.2](#v022--direct-links-through-nats) | 2026-10-18 | NAT_CHECK, HOLD_OPEN for direct links between home NATs, bigger window |
 | [v0.2.1](#v021--privacy-mode) | 2026-10-17 | Hide IPs and payloads on screen (for streaming) |
 | [v0.2.0](#v020--quality-of-life) | 2026-10-16 | Speaker choice, volume sliders, notifications with sounds, switch the shared screen live |
 | [v0.1.2](#v012--test-suite) | 2026-10-16 | Test suite + CI; two bugs fixed (lost goodbye, mic re-opening) |
 | [v0.1.1](#v011--sharper-screen-share) | 2026-10-15 | AV1 screen share: twice the frame rate on slow links; live stats |
 | [v0.1.0](#v010--first-pre-release) | 2026-10-15 | First pre-release: calls, chat, screen, files, TURN, verification |
+
+---
+
+## v0.2.4 — Release polish
+
+*2026-10-29*
+
+**Highlights**
+- CryptChat is now under the **MIT License** (it was GPL-3.0 up to v0.2.3).
+- A new README with a screenshot and what sets CryptChat apart.
+- Bug reports in one click (**COPY_LOG**), and error messages that say what to do.
+
+**Added**
+- **[ COPY_LOG ]** in the KERNEL_LOG header copies the whole session log for a bug report, with
+  versions on top. IP addresses, STUN/TURN hosts, payloads, file names, shared window titles and
+  aliases are always masked (even with HIDE_IP_AND_PAYLOAD off); the screen still shows them.
+  The bug report form now asks for it.
+
+**Changed**
+- **License: MIT** instead of GPL-3.0, for this version on. Use, change and share CryptChat
+  freely; keep the copyright notice. Versions up to v0.2.3 stay under GPL-3.0.
+- New README: banner, screenshot, features, download, how it works, security, docs.
+- **Clearer error messages.** Each says what happened and what to do:
+  - your own OFFER pasted back ("That is your own OFFER…"),
+  - both sides pressed GENERATE_PAYLOAD,
+  - an old ANSWER after TERMINATE_LINK,
+  - a damaged payload (instead of the browser's exception text),
+  - an OFFER from an incompatible version.
+  Microphone, speaker and screen capture errors explain the cause (another app holds the mic,
+  Windows privacy settings, a protected window...) and keep the exact error name for bug
+  reports. "ICE failed" now points to NAT_CHECK.
+- Starting CryptChat while it is already running (say, a double-clicked shortcut) brings the
+  open window to the front instead of starting a second copy on the same settings.
+- The microphone no longer opens for a moment at startup (the Windows mic indicator used to
+  flash). Device names are read without capturing; the mic only opens during a call.
+- Dependabot watches the dependencies: weekly for npm (Electron in its own pull request),
+  monthly for GitHub Actions.
+
+**Fixed**
+- A disk error while receiving a file (disk full, no write permission) sent the full local
+  path, including the Windows user name, to the peer and the log. Both now get a short reason
+  like "Not enough free disk space."
+- Switching MIC_SRC to a microphone that cannot start, during a call, failed silently. It now
+  says why and keeps the previous mic.
 
 ---
 

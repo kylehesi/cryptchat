@@ -1,4 +1,5 @@
 import { log } from '../core/logger.js';
+import { describeCaptureError } from '../media/device-errors.js';
 import { bindVolume } from './av-panel.js';
 
 /** SHARE_SCR / SWITCH / STOP, the source picker dialog, the incoming feed, [FULL] and [ PIP ]. */
@@ -37,7 +38,7 @@ export function mountScreenPanel({ screenShare, connection, els }) {
       await screenShare.start({ source, withAudio: audioCheck.checked, preset });
       dialog.close();
     } catch (error) {
-      log.err(`Broadcast failed: ${error.message}`);
+      log.err(`Broadcast failed: ${describeCaptureError(error)}.`);
     } finally {
       startButton.disabled = !selectedId;
     }

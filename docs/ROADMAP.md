@@ -10,7 +10,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 ## Phase 0 — Foundation
 - [x] Install Node.js LTS (v24.20.0)
 - [~] `git init`, `.gitignore`, create the GitHub repo and push (**so we never lose it again**)
-- [x] `LICENSE` (GPL-3.0), README skeleton
+- [x] `LICENSE` (GPL-3.0, MIT since v0.2.4), README skeleton
 - [x] `package.json` with latest stable Electron (44.7.0) and `npm start`
 - [x] `main.js` with secure defaults (contextIsolation, sandbox, CSP, `app://` scheme,
       permission allow-list, navigation lock), minimal `preload.js`
@@ -68,7 +68,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done
 - [x] Speaking indicator on L / R cards
 - [x] Settings: echo cancellation / noise suppression / AGC toggles
 - [ ] "Music mode" (stereo, high bitrate, no DSP) → moved to phase 6, where it matters for system audio
-- [x] Mic is only captured during a call; idle = no capture (a short probe at boot unlocks device names)
+- [x] Mic is only captured during a call; idle = no capture (v0.2.4: not even a probe at boot)
 - **Checkpoint:** a real voice call, with mute/deafen visible on both sides.
   - [x] Automated with Chromium's fake audio device: audio flows both ways, mute → zero energy at
         the peer, deafen → peer sees both icons off, unmute-while-deafened undeafens, device

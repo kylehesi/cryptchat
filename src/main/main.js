@@ -31,6 +31,14 @@ if (PROFILE) {
   app.setPath('userData', `${app.getPath('userData')}-${PROFILE}`);
 }
 
+// One instance per profile: a second launch (say, a double-clicked shortcut) would share the
+// first one's settings and storage. It brings the running window to the front instead. The
+// lock belongs to the userData folder, so `--profile=b` still gets an instance of its own.
+const isFirstInstance = app.requestSingleInstanceLock();
+if (!isFirstInstance) app.quit();
+
+let mainWindow = null;
+
 protocol.registerSchemesAsPrivileged([
   {
     scheme: APP_SCHEME,
@@ -160,7 +168,15 @@ Menu.setApplicationMenu(null);
 // Own taskbar identity, so Windows shows our icon instead of grouping us under electron.exe.
 app.setAppUserModelId('org.cryptchat.app');
 
+app.on('second-instance', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+});
+
 app.whenReady().then(() => {
+  if (!isFirstInstance) return; // quitting: this profile is already open
   registerAppProtocol();
   hardenSession();
   registerIpc();
@@ -168,7 +184,7 @@ app.whenReady().then(() => {
   registerSecureStore({ isOwnOrigin });
   registerCloudflareTurn({ isOwnOrigin });
   registerFileReceive({ isOwnOrigin });
-  createMainWindow();
+  mainWindow = createMainWindow();
 });
 
 app.on('window-all-closed', () => {

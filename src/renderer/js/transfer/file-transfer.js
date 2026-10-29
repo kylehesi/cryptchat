@@ -12,7 +12,7 @@
 //
 // Events: 'change' { transfer }  (any state or progress change; progress is throttled)
 
-import { log } from '../core/logger.js';
+import { log, secret } from '../core/logger.js';
 import { decodeMessage, encodeMessage } from '../net/protocol.js';
 
 const CHUNK_BYTES = 64 * 1024;
@@ -68,7 +68,7 @@ export class FileTransfers extends EventTarget {
       const transfer = { id: crypto.randomUUID(), direction: 'out', name: file.name, size: file.size, bytes: 0, acked: 0, status: 'waiting', file };
       this.transfers.set(transfer.id, transfer);
       this.connection.send('control', 'file-offer', { id: transfer.id, name: file.name, size: file.size });
-      log.info(`File offered: ${file.name} (${formatBytes(file.size)}). Waiting for the peer to accept.`);
+      log.info(`File offered: ${secret(file.name)} (${formatBytes(file.size)}). Waiting for the peer to accept.`);
       this.#changed(transfer);
     }
   }
@@ -135,7 +135,7 @@ export class FileTransfers extends EventTarget {
         if (!Number.isSafeInteger(size) || size < 0) return;
         const incoming = { id, direction: 'in', name, size, bytes: 0, status: 'offered' };
         this.transfers.set(id, incoming);
-        log.info(`Incoming file: ${name} (${formatBytes(size)}). Accept or decline in the chat.`);
+        log.info(`Incoming file: ${secret(name)} (${formatBytes(size)}). Accept or decline in the chat.`);
         this.#changed(incoming);
         break;
       }
@@ -330,11 +330,11 @@ export class FileTransfers extends EventTarget {
     const verb = transfer.direction === 'out' ? 'sent' : 'received';
     if (status === 'done') {
       const seconds = Math.max(0.001, (transfer.endedAt - transfer.startedAt) / 1000);
-      const where = transfer.direction === 'in' ? ` → Downloads\\CryptChat\\${transfer.savedAs}` : '';
-      log.ok(`File ${verb}: ${transfer.name} (${formatBytes(transfer.size)}, ${formatBytes(transfer.size / seconds)}/s)${where}`);
+      const where = transfer.direction === 'in' ? ` → Downloads\\CryptChat\\${secret(transfer.savedAs)}` : '';
+      log.ok(`File ${verb}: ${secret(transfer.name)} (${formatBytes(transfer.size)}, ${formatBytes(transfer.size / seconds)}/s)${where}`);
     } else {
       const label = { declined: 'declined', canceled: 'canceled', failed: 'failed' }[status];
-      const line = `File ${label}: ${transfer.name}${reason ? ` (${reason})` : ''}`;
+      const line = `File ${label}: ${secret(transfer.name)}${reason ? ` (${reason})` : ''}`;
       // Our own cancel/decline only confirms a click: no notification for it.
       const ownAction = reason === 'by you' || (status === 'declined' && transfer.direction === 'in');
       if (status === 'failed') log.err(line);

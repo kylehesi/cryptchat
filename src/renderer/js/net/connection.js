@@ -44,6 +44,7 @@ export class Connection extends EventTarget {
   #restartTimer = null;
   #lostTimer = null;
   #holdTimer = null;
+  #localSdp = null; // the last payload this side made (kept after the link ends: payloads are single-use)
   #routeKey = null;
   #lastSnapshot = null;
 
@@ -83,22 +84,21 @@ export class Connection extends EventTarget {
       throw error;
     }
 
+    // The most common mix-up: pasting what this side just made instead of the peer's reply.
+    if (this.#localSdp && remote.sdp === this.#localSdp) {
+      log.err(`That is your own ${remote.type.toUpperCase()}. Send it to your peer, and paste here what they send back.`);
+      return;
+    }
+
+    const problem = wrongPayloadMessage(remote.type, this.phase);
+    if (problem) {
+      log.err(problem);
+      return;
+    }
     if (remote.type === 'offer') {
-      if (this.phase !== 'idle') {
-        log.err('Got an OFFER, but a session is already running. TERMINATE_LINK first.');
-        return;
-      }
       if (!this.#checkNetworkReady()) return;
       await this.#answer(remote);
     } else {
-      if (this.phase !== 'awaiting-answer') {
-        log.err(
-          this.phase === 'idle'
-            ? 'Got an ANSWER, but no OFFER was generated here. GENERATE_PAYLOAD first.'
-            : 'Got an ANSWER, but this side is not waiting for one.',
-        );
-        return;
-      }
       await this.#applyAnswer(remote);
     }
   }
@@ -152,11 +152,11 @@ export class Connection extends EventTarget {
   #checkNetworkReady() {
     const config = this.networkSettings.config;
     if (!config) {
-      log.err('Network settings not loaded yet.');
+      log.err('Network settings are still loading. Try again in a moment.');
       return false;
     }
     if (config.relayOnly && !hasAnyTurn(config)) {
-      log.err('RELAY_ONLY is on but no TURN server is configured. Fix it in SETTINGS.');
+      log.err('RELAY_ONLY is on, but no TURN server is set up. In Settings → NETWORK, add one or turn RELAY_ONLY off.');
       return false;
     }
     return true;
@@ -346,7 +346,7 @@ export class Connection extends EventTarget {
             // The network path worked, but the certificates did not match the payloads.
             log.err('SECURE HANDSHAKE (DTLS) FAILED: the payloads do not belong together or were altered in transit. Possible tampering. TERMINATE_LINK and exchange new payloads over a channel you trust.');
           } else {
-            log.err('ICE failed: no working route between peers. A TURN relay may be required. TERMINATE_LINK and retry.');
+            log.err('ICE failed: no working route between the two networks. Press NAT_CHECK on both sides: whoever is behind a symmetric NAT or blocked UDP needs TURN (Settings → NETWORK). Then TERMINATE_LINK and exchange new payloads.');
           }
         }
         break;
@@ -363,9 +363,10 @@ export class Connection extends EventTarget {
       throw new Error('no relay candidate. The TURN server is unreachable or rejected the credentials. Run TEST_TURN in SETTINGS.');
     }
     if (!counts.srflx && !counts.relay) {
-      log.warn('No public route discovered (STUN unreachable?). Only peers on the same network can connect.');
+      log.warn('No public address found (no STUN server answered). Only a peer on the same network can connect. Check the internet connection, or press NAT_CHECK.');
     }
 
+    this.#localSdp = description.sdp;
     const payload = await encodePayload(description);
     log.info(`${description.type.toUpperCase()} payload ready (${payload.length} chars).`);
     this.#emit('local-payload', { payload, type: description.type });
@@ -377,7 +378,7 @@ export class Connection extends EventTarget {
   }
 
   #fail(what, error) {
-    log.err(`${what}: ${error.message}`);
+    log.err(`${what}: ${describeSignalingError(error)}`);
     this.#closeSession();
   }
 
@@ -390,6 +391,35 @@ export class Connection extends EventTarget {
   #emit(type, detail) {
     this.dispatchEvent(new CustomEvent(type, { detail }));
   }
+}
+
+/** Why a pasted payload does not fit this side's state, or null if it does. */
+function wrongPayloadMessage(type, phase) {
+  if (type === 'offer') {
+    if (phase === 'idle') return null;
+    if (phase === 'awaiting-answer') {
+      return "You both pressed GENERATE_PAYLOAD: that is your peer's OFFER, but this side made one too. Only one side generates. Either paste your OFFER on their side, or TERMINATE_LINK here and inject theirs.";
+    }
+    return phase === 'connected' || phase === 'reconnecting'
+      ? 'Got an OFFER, but you are already linked. TERMINATE_LINK first to start a new link.'
+      : 'Got an OFFER, but this side already answered one. TERMINATE_LINK first to start over.';
+  }
+  if (phase === 'awaiting-answer') return null;
+  if (phase === 'idle') {
+    return 'Got an ANSWER, but this side has no OFFER waiting (the link was terminated, or the app restarted). Payloads are single-use: GENERATE_PAYLOAD and send a new OFFER.';
+  }
+  if (phase === 'awaiting-peer') {
+    return 'Got an ANSWER, but this side answered an OFFER itself. The ANSWER belongs on the side that generated the OFFER.';
+  }
+  return 'Got an ANSWER, but this side is not waiting for one (it is already connecting or linked).';
+}
+
+/** A readable reason for a failed offer/answer step (the browser's own text is for developers). */
+function describeSignalingError(error) {
+  if (error instanceof PayloadError || !['OperationError', 'InvalidAccessError', 'SyntaxError', 'InvalidModificationError'].includes(error?.name)) {
+    return error?.message ?? String(error);
+  }
+  return `the payload is damaged or does not belong to this link (${error.name}). Ask your peer to copy it again, or start over with new payloads.`;
 }
 
 function formatCounts(counts) {

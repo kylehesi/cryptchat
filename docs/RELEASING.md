@@ -10,7 +10,7 @@ This writes `dist\CryptChat-Setup-<version>.exe`. The installer:
 
 - installs **per user** into `%LOCALAPPDATA%\Programs\CryptChat` and **never asks for
   administrator rights** (no UAC prompt),
-- lets the user pick the folder, shows the GPL-3.0 license, and creates Start menu and
+- lets the user pick the folder, shows the MIT license, and creates Start menu and
   desktop shortcuts,
 - keeps the user's settings on uninstall.
 
@@ -41,7 +41,7 @@ from source with `start.cmd`. That runs the official, signed Electron runtime an
 trusted certificate (the publisher shown is "SignPath Foundation").
 
 Requirements, from [their conditions](https://signpath.org/terms):
-- an OSI-approved license (GPL-3.0 qualifies),
+- an OSI-approved license (MIT qualifies),
 - a public repository,
 - builds produced by CI from the repository (this workflow),
 - a code signing policy published on the project page.

@@ -21,12 +21,15 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done
 - [ ] **Watch:** `files.test.js` failed once (2026-10-16) with "Object has been destroyed" in a
       full run, then passed in 3 full rounds + 5 single runs. The harness now logs renderer
       crashes, window closes and hangs, so the next occurrence shows the cause
-- [ ] **Dependabot** for npm and GitHub Actions. Electron ships security fixes every few weeks,
-      and an outdated Electron is the app's biggest risk
-- [ ] **Single-instance lock.** A second launch with the same profile focuses the first window
+- [ ] **Watch:** `voice.test.js` "audio keeps flowing after a device switch" failed once
+      (2026-10-29, energy 0.0006 vs. 0.001 threshold, bytes still flowing), then passed 3 of 3.
+      If it repeats, measure the fake device's level right after a switch and lower the bar
+- [x] **Dependabot** for npm (weekly; Electron in its own PR, build tools grouped) and GitHub
+      Actions (monthly): [.github/dependabot.yml](../.github/dependabot.yml)
+- [x] **Single-instance lock.** A second launch with the same profile focuses the first window
       instead of sharing its settings and storage (`--profile=x` stays as the dev escape hatch)
-- [ ] **Lazy mic probe.** Today the mic opens briefly at boot just to read device names. Do it on
-      the first call or when MIC_SRC is opened
+- [x] **No mic at startup.** The boot probe is gone: device names are readable without capture
+      (our permission check grants media), so the mic only opens during a call
 
 ## 2. Small gaps (forgotten in v0.1)
 
@@ -38,11 +41,11 @@ Legend: `[ ]` open · `[~]` in progress · `[x]` done
       buttons. (Windows toast pop-ups were not added; the taskbar flash covers "look here")
 - [x] **Source switch while sharing:** SWITCH / STOP split the share button; the picker opens
       with the live source preselected, and the viewer's feed cuts over without a gap
-- [ ] **COPY_LOG** button: copies the KERNEL_LOG with IPs and payloads masked, for bug reports
+- [x] **COPY_LOG** button: copies the KERNEL_LOG with IPs and payloads masked, for bug reports
 - [x] **NAT check:** NAT_CHECK next to GENERATE_PAYLOAD says upfront whether the
       network needs TURN (cone / symmetric / UDP blocked from two STUN servers; CGNAT and public
       IPv6 noted)
-- [ ] **Error messages** for every failure path (no mic, permission denied, bad payload, ICE
+- [x] **Error messages** for every failure path (no mic, permission denied, bad payload, ICE
       failed, TURN refused), reviewed end to end
 - [ ] **Keyboard shortcuts:** mic toggle, deafen, **push-to-talk** (global hotkey), and a **panic
       key** (mute everything + hide the window)

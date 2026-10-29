@@ -6,6 +6,7 @@
 //   'device'   { deviceId }                  selected output changed
 
 import { log } from '../core/logger.js';
+import { describeOutputError } from './device-errors.js';
 
 const STORAGE_KEY = 'cc.audio-out';
 const DEFAULT_ID = 'default';
@@ -62,7 +63,7 @@ export class Speakers extends EventTarget {
       await element.setSinkId(target);
       return true;
     } catch (error) {
-      log.err(`Could not switch audio output (${error.name}). Keeping the previous device.`);
+      log.err(`Could not switch audio output: ${describeOutputError(error)}. Keeping the previous device.`);
       return false;
     }
   }

@@ -145,7 +145,7 @@ export class PeerSession extends EventTarget {
     MEDIA_SLOTS.forEach((slot, index) => {
       const transceiver = transceivers[index];
       if (transceiver?.receiver.track.kind !== slot.kind) {
-        throw new Error(`Offer layout mismatch at slot "${slot.name}".`);
+        throw new Error(`the OFFER comes from an incompatible CryptChat version (media slot "${slot.name}" does not match). Both sides need the same version.`);
       }
       transceiver.direction = 'sendrecv';
       this.slots[slot.name] = transceiver;

@@ -12,7 +12,7 @@
 //   'local-stats'   { codec, impl, width, height, fps, kbps, limit } | null
 //   'remote-stats'  { codec, width, height, fps, kbps, lossPct } | null
 
-import { log } from '../core/logger.js';
+import { log, secret } from '../core/logger.js';
 import { SCREEN_CODEC_ORDER } from '../net/peer-session.js';
 import { clampVolume, loadVolume, saveVolume } from './volume.js';
 
@@ -143,7 +143,7 @@ export class ScreenShare extends EventTarget {
     this.local = { sourceId: source.id, name: source.name, withAudio: Boolean(audio), preset };
     this.#emit('local', this.local);
     this.#sendState();
-    log.ok(`${switching ? 'Switched to' : 'Broadcasting'}: ${source.name} [${settings.label}]${audio ? ' + system audio' : ''}`);
+    log.ok(`${switching ? 'Switched to' : 'Broadcasting'}: ${secret(source.name)} [${settings.label}]${audio ? ' + system audio' : ''}`);
   }
 
   async stop({ quiet = false } = {}) {

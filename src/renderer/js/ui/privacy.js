@@ -5,12 +5,10 @@
 //   - TURN address / user / Cloudflare key fields are dotted like passwords (CSS).
 // The data itself is untouched: only what is drawn on screen changes.
 
+import { maskIps } from '../core/log-report.js';
 import { log } from '../core/logger.js';
 
 const STORAGE_KEY = 'cc.privacy';
-const IPV4 = /\b(?:25[0-5]|2[0-4]\d|1?\d?\d)(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}\b/g;
-// Compressed or full IPv6 (at least two groups with "::", or eight groups).
-const IPV6 = /\b(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}\b|\b(?:[0-9a-f]{1,4}:){1,7}:(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?\b|::(?:[0-9a-f]{1,4}:){0,6}[0-9a-f]{1,4}\b/gi;
 
 export class Privacy extends EventTarget {
   hidden = load();
@@ -32,7 +30,7 @@ export class Privacy extends EventTarget {
   /** Masks IP addresses in `text` while hiding is on; returns `text` unchanged otherwise. */
   maskText(text) {
     if (!this.hidden) return text;
-    return String(text).replace(IPV4, '•••.•••.•••.•••').replace(IPV6, '••••:••••::••••');
+    return maskIps(text);
   }
 
   /**

@@ -181,7 +181,12 @@
       <section class="panel panel-log" aria-labelledby="h-log">
         <header class="panel-header">
           <h2 class="panel-title" id="h-log"><span class="tag">[ SYS ]</span> ~ KERNEL_LOG</h2>
-          <span class="link-status" id="link-status" role="status">LINK: OFFLINE</span>
+          <span class="header-actions">
+            <span class="link-status" id="link-status" role="status">LINK: OFFLINE</span>
+            <button class="btn btn-header" id="btn-copy-log" type="button"
+                    title="Copy the log for a bug report (IPs, hosts, payloads and names are masked)"
+                    aria-label="Copy the log for a bug report">[ COPY_LOG ]</button>
+          </span>
         </header>
         <div id="kernel-log" class="panel-body kernel-log" role="log" aria-live="polite"></div>
       </section>
@@ -333,6 +338,8 @@
           <li><b>HOLD_OPEN</b> (<kbd>[ ⚙ ]</kbd> → NETWORK): after you send your ANSWER, you stay reachable for this long
               (default 2 min). The peer should inject it before then, or the link may need TURN.</li>
           <li><b>RELAY_ONLY</b> hides your IP from the peer (needs TURN).</li>
+          <li><b>Reporting a bug?</b> <kbd>[ COPY_LOG ]</kbd> (KERNEL_LOG header) copies the log with IPs, hosts, payloads
+              and names masked, ready to paste into a GitHub issue.</li>
           <li><b>"DTLS failed":</b> the payloads were altered or mixed up. Start over.</li>
         </ul>
       </section>

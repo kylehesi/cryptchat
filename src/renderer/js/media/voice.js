@@ -10,6 +10,7 @@
 //   'speaking'      { who: 'local' | 'remote', speaking }
 
 import { log } from '../core/logger.js';
+import { describeMicError } from './device-errors.js';
 import { clampVolume, loadVolume, saveVolume } from './volume.js';
 
 const VOLUME_KEY = 'cc.volume.voice';
@@ -119,7 +120,7 @@ export class Voice extends EventTarget {
       const label = this.microphone.devices.find((device) => device.id === this.microphone.deviceId)?.label;
       log.ok(`Voice channel open. Mic: ${label ?? track.label}`);
     } catch (error) {
-      log.err(`Microphone unavailable (${error.name}). Listen-only mode.`);
+      log.err(`Microphone unavailable: ${describeMicError(error)}. You can still hear your peer (listen-only).`);
     }
   }
 

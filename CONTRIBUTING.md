@@ -58,4 +58,4 @@ node test/run.js files chat   :: only the e2e files whose name contains "files" 
 - Keep each PR focused on one thing.
 - Run `npm test` and describe what else you tested (ideally two PCs).
 - By contributing, you agree that your contribution is licensed under the
-  [GPL-3.0](LICENSE), like the rest of the project.
+  [MIT License](LICENSE), like the rest of the project.

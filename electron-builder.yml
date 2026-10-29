@@ -3,7 +3,7 @@
 
 appId: org.cryptchat.app          # must match app.setAppUserModelId() in src/main/main.js
 productName: CryptChat
-copyright: Copyright (C) 2026 kylehesi. Licensed under GPL-3.0.
+copyright: Copyright (c) 2026 kylehesi. MIT License.
 
 directories:
   output: dist
